@@ -42,17 +42,37 @@ main = do
 
     forever . threadDelay $ 60 * 1000 * 1000
 
+entryFromText :: Text.Text -> ConeEntry
+entryFromText s = ConeEntry {
+    ceEntryId       = 0,
+    ceLabel         = s,
+    ceTargetUri     = Nothing,
+    ceComment       = Nothing,
+    ceIconName      = Nothing,
+    ceStlName       = Nothing,
+    ceColor         = Nothing,
+    ceIsLeaf        = True,
+    ceTextId        = s
+}
+
+postTree :: [Post] -> ConeTree
+postTree [] = rootNode []
+postTree ps = rootNode $ fmap (leafNode . entryFromText . title) ps
+
 updater :: IOData () -> IO ()
-updater ioData = getCustom ioData >>= go
+updater ioData = go
     where
-        go bearerToken = do
-            runRedditAnon $ do
+        go = do
+            ~(Right newModel) <- runRedditAnon $ do
                 posts <- subredditPosts $ R "AskReddit"
-                liftIO . print . title $ head posts
-            return ()
+                liftIO $ print $ "Received " ++ (show . length $ posts) ++ " posts"
+                return $ (prepTree . postTree) posts
+
+            applyIOSetter ioData newModel setTestModel
+            print "Updated cone model"
 
 frontend :: IOData () -> IO ()
-frontend ioData = do
+frontend ioData =
     runServer ioData Nothing Nothing $ emptyTree
 
 

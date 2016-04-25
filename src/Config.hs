@@ -21,4 +21,4 @@ srvPort = 8080
 
 -- show this in upper left hand corner of conecanvas
 domainLabel :: Text
-domainLabel = "Trending search queries"
+domainLabel = "AskReddit"
