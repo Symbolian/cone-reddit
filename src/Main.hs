@@ -55,18 +55,43 @@ entryFromText s = ConeEntry {
     ceTextId        = s
 }
 
-postTree :: [Post] -> ConeTree
-postTree [] = rootNode []
-postTree ps = rootNode $ fmap (leafNode . entryFromText . title) ps
+data SrData = SrData {
+    srName      :: SubredditName,
+    srPosts     :: [Post]
+}
+
+srData arg = SrData {
+    srName      = fst arg,
+    srPosts     = snd arg
+}
+
+-- Make a ConeTree from a list of Subreddit names
+srTree :: [SrData] -> ConeTree
+srTree [] = rootNode []
+srTree sds = rootNode $ fmap (\sd -> postTree (srPosts sd) (srEntry sd)) sds
+    where srEntry sd = entryFromText . Text.pack . show . srName $ sd
+
+-- Make a ConeTree from a list of posts in a Subreddit and the Subreddit's entry
+postTree :: [Post] -> ConeEntry -> ConeTree
+postTree [] e = leafNode e
+postTree ps e = node
+    (fmap (commentTree . entryFromText . title) ps)
+    e
+
+commentTree :: ConeEntry -> ConeTree
+commentTree e = leafNode e
 
 updater :: IOData () -> IO ()
 updater ioData = go
     where
         go = do
-            ~(Right newModel) <- runRedditAnon $ do
-                posts <- subredditPosts $ R "AskReddit"
-                liftIO $ print $ "Received " ++ (show . length $ posts) ++ " posts"
-                return $ (prepTree . postTree) posts
+            ~(Right sds) <- runRedditAnon $ do
+                -- posts <- subredditPosts $ R "AskReddit"
+                let sns = map R ["AskReddit", "Berlin", "de"]
+                tps <- mapM subredditPosts sns
+                return . map srData $ zip sns tps
+
+            let newModel = prepTree . srTree $ sds
 
             applyIOSetter ioData newModel setTestModel
             print "Updated cone model"
