@@ -9,6 +9,7 @@ import Reddit
 import Reddit.Types.Post
 import Reddit.Types.Listing
 import Reddit.Types.Subreddit                       (SubredditName(..))
+import qualified Reddit.Types.Comment           as C
 
 import Control.Monad
 import Control.Monad.IO.Class
@@ -57,7 +58,7 @@ entryFromText s = ConeEntry {
 
 data SrData = SrData {
     srName      :: SubredditName,
-    srPosts     :: [Post]
+    srPosts     :: [C.PostComments]
 }
 
 srData arg = SrData {
@@ -72,27 +73,47 @@ srTree sds = rootNode $ fmap (\sd -> postTree (srPosts sd) (srEntry sd)) sds
     where srEntry sd = entryFromText . Text.pack . show . srName $ sd
 
 -- Make a ConeTree from a list of posts in a Subreddit and the Subreddit's entry
-postTree :: [Post] -> ConeEntry -> ConeTree
+postTree :: [C.PostComments] -> ConeEntry -> ConeTree
 postTree [] e = leafNode e
 postTree ps e = node
-    (fmap (commentTree . entryFromText . title) ps)
+    (fmap (\(C.PostComments p crs) -> commentTree crs (entryFromText . title $ p)) ps)
     e
 
-commentTree :: ConeEntry -> ConeTree
-commentTree e = leafNode e
+commentTree :: [C.CommentReference] -> ConeEntry -> ConeTree
+commentTree crs e = node (commentTreeBuilder crs []) e
+
+commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> [ConeTree]
+commentTreeBuilder [] ts = ts
+commentTreeBuilder ((C.Actual c):crs) ts =
+    commentTreeBuilder crs ((appendCom c):ts)
+    where appendCom c = leafNode . entryFromText . Text.pack . show . C.author $ c
+commentTreeBuilder ((C.Reference cr _):crs) ts =
+    commentTreeBuilder crs ((appendRef cr):ts)
+    where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
 updater :: IOData () -> IO ()
 updater ioData = go
     where
         go = do
             ~(Right sds) <- runRedditAnon $ do
-                -- posts <- subredditPosts $ R "AskReddit"
-                let sns = map R ["AskReddit", "Berlin", "de"]
-                tps <- mapM subredditPosts sns
-                return . map srData $ zip sns tps
+                -- Collect subreddits to be included
+                let names = map R ["AskReddit", "Berlin", "de"]
 
+                -- Retrieve post listing from each of the subreddits
+                ps <- mapM subredditPosts names
+
+                -- Retrieve comments for each listing
+                ps' <- mapM
+                    -- (\p -> (p, getComments p))
+                    (mapM (getPostComments . postID))
+                    ps
+
+                return . map srData $ zip names ps'
+
+            -- Construct ConeTree from collected data
             let newModel = prepTree . srTree $ sds
 
+            -- Update model with new ConeTree
             applyIOSetter ioData newModel setTestModel
             print "Updated cone model"
 
