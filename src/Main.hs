@@ -100,7 +100,7 @@ updater :: IOData () -> IO ()
 updater ioData = go
     where
         go = do
-            ~(Right sds) <- runRedditAnon $ do
+            sds <- runRedditAnon $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
                 let names = map R ["AskReddit", "Berlin", "de"]
@@ -115,12 +115,17 @@ updater ioData = go
 
                 return . map srData $ zip names ps'
 
-            -- Construct ConeTree from collected data
-            let newModel = prepTree . srTree $ sds
+            case sds of
+                Left msg -> do
+                    putStrLn "Error loading data"
+                    putStrLn . show $ msg
+                Right sds -> do
+                    -- Construct ConeTree from collected data
+                    let newModel = prepTree . srTree $ sds
 
-            -- Update model with new ConeTree
-            applyIOSetter ioData newModel setTestModel
-            print "Updated cone model"
+                    -- Update model with new ConeTree
+                    applyIOSetter ioData newModel setTestModel
+                    putStrLn "Updated cone model"
 
 frontend :: IOData () -> IO ()
 frontend ioData =
