@@ -11,6 +11,10 @@ import Reddit.Types.Listing
 import Reddit.Types.Subreddit                       (SubredditName(..))
 import qualified Reddit.Types.Comment           as C
 
+import Data.Prizm.Types
+import Data.Prizm.Color
+import Data.Prizm.Color.CIE.LCH
+
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Monoid
@@ -43,27 +47,48 @@ main = do
 
     forever . threadDelay $ 60 * 1000 * 1000
 
-entryFromText :: Text.Text -> ConeEntry
-entryFromText s = ConeEntry {
+entryFromPost :: Post -> Integer -> ConeEntry
+entryFromPost p norm = ConeEntry {
     ceEntryId       = 0,
-    ceLabel         = s,
+    ceLabel         = title p,
     ceTargetUri     = Nothing,
     ceComment       = Nothing,
     ceIconName      = Nothing,
     ceStlName       = Nothing,
-    ceColor         = Nothing,
+    ceColor         = Just . (colorFromScore norm) . score $ p,
     ceIsLeaf        = True,
-    ceTextId        = s
+    ceTextId        = Text.pack . show . postID $ p
 }
+
+entryFromComment :: C.Comment -> Integer -> ConeEntry
+entryFromComment c norm = ConeEntry {
+    ceEntryId       = 0,
+    ceLabel         = Text.pack . show . C.author $ c,
+    ceTargetUri     = Nothing,
+    ceComment       = Nothing,
+    ceIconName      = Nothing,
+    ceStlName       = Nothing,
+    ceColor         = (colorFromScore norm) <$> C.score c,
+    ceIsLeaf        = True,
+    ceTextId        = Text.pack . show . C.commentID $ c
+}
+
+-- Create a cone color by interpolating between two color values depending
+-- on the score of the comment/post
+colorFromScore :: Integer -> Integer -> ConeColor
+colorFromScore norm i = ConeColor (
+        ColAsFloat,
+        cFloats . toRGB $ interpolate ipval (CIELCH 90 20 235, CIELCH 50 80 25)
+    )
+    where
+        n = (fromIntegral norm) / 100
+        ipval = floor $ log(((fromIntegral i) + n) / n) * 50
+        -- Convert components of RGB values used by Prizm color mixer to floats
+        cFloats (RGB r g b) = map ((* (1/255)) . fromIntegral) [r, g, b]
 
 data SrData = SrData {
     srName      :: SubredditName,
     srPosts     :: [C.PostComments]
-}
-
-srData arg = SrData {
-    srName      = fst arg,
-    srPosts     = snd arg
 }
 
 -- Make a ConeTree from a list of Subreddit names
@@ -75,22 +100,24 @@ srTree sds = rootNode $ fmap (\sd -> postTree (srPosts sd) (srEntry sd)) sds
 -- Make a ConeTree from a list of posts in a Subreddit and the Subreddit's entry
 postTree :: [C.PostComments] -> ConeEntry -> ConeTree
 postTree [] e = leafNode e
-postTree ps e = node
-    (fmap (\(C.PostComments p crs) -> commentTree crs (entryFromText . title $ p)) ps)
-    e
+postTree ps e =
+    let norm = maximum $ map (\(C.PostComments p _) -> score p) ps
+    in  node
+        (fmap (\(C.PostComments p crs) -> commentTree crs (entryFromPost p norm)) ps)
+        e
 
 commentTree :: [C.CommentReference] -> ConeEntry -> ConeTree
-commentTree crs e = node (commentTreeBuilder (take 15 $ crs) []) e
+commentTree crs e = node (commentTreeBuilder (take 15 $ crs) [] 1000) e
 
-commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> [ConeTree]
-commentTreeBuilder [] ts = ts
-commentTreeBuilder ((C.Actual c):crs) ts =
-    commentTreeBuilder crs ((appendCom c):ts)
+commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> Integer -> [ConeTree]
+commentTreeBuilder [] ts _ = ts
+commentTreeBuilder ((C.Actual c):crs) ts norm =
+    commentTreeBuilder crs ((appendCom c):ts) norm
     where appendCom c = node
-            (commentTreeBuilder (contents . C.replies $ c) [])
-            (entryFromText . Text.pack . (take 20) . show . C.body $ c)
-commentTreeBuilder ((C.Reference cr _):crs) ts =
-    commentTreeBuilder crs ts
+            (commentTreeBuilder (contents . C.replies $ c) [] norm)
+            (entryFromComment c norm)
+commentTreeBuilder ((C.Reference cr _):crs) ts norm =
+    commentTreeBuilder crs ts norm
     -- commentTreeBuilder crs ((appendRef cr):ts)
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
@@ -113,7 +140,7 @@ updater ioData = go
                 ps' <- mapM (mapM (getPostComments . postID)) ps
                 liftIO $ putStrLn "Loaded comments"
 
-                return . map srData $ zip names ps'
+                return . map (uncurry SrData) $ zip names ps'
 
             case sds of
                 Left msg -> do

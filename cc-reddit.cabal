@@ -26,6 +26,7 @@ executable cc-reddit
     text >=1.2 && <1.3,
     warp == 3.2.*,
     ConeServer >= 0.3.0.0,
-    hoauth2
+    hoauth2,
+    prizm >= 0.3.1.2
   hs-source-dirs:      src
   default-language:    Haskell2010
