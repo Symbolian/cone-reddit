@@ -80,33 +80,38 @@ postTree ps e = node
     e
 
 commentTree :: [C.CommentReference] -> ConeEntry -> ConeTree
-commentTree crs e = node (commentTreeBuilder crs []) e
+commentTree crs e = node (commentTreeBuilder (take 15 $ crs) []) e
 
 commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> [ConeTree]
 commentTreeBuilder [] ts = ts
 commentTreeBuilder ((C.Actual c):crs) ts =
     commentTreeBuilder crs ((appendCom c):ts)
-    where appendCom c = leafNode . entryFromText . Text.pack . show . C.author $ c
+    where appendCom c = node
+            (commentTreeBuilder (contents . C.replies $ c) [])
+            (entryFromText . Text.pack . (take 20) . show . C.body $ c)
 commentTreeBuilder ((C.Reference cr _):crs) ts =
-    commentTreeBuilder crs ((appendRef cr):ts)
-    where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
+    commentTreeBuilder crs ts
+    -- commentTreeBuilder crs ((appendRef cr):ts)
+    -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
+
+
 
 updater :: IOData () -> IO ()
 updater ioData = go
     where
         go = do
             ~(Right sds) <- runRedditAnon $ do
+                liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
                 let names = map R ["AskReddit", "Berlin", "de"]
 
                 -- Retrieve post listing from each of the subreddits
                 ps <- mapM subredditPosts names
+                liftIO $ putStrLn "Loaded post listings"
 
                 -- Retrieve comments for each listing
-                ps' <- mapM
-                    -- (\p -> (p, getComments p))
-                    (mapM (getPostComments . postID))
-                    ps
+                ps' <- mapM (mapM (getPostComments . postID)) ps
+                liftIO $ putStrLn "Loaded comments"
 
                 return . map srData $ zip names ps'
 
@@ -120,15 +125,3 @@ updater ioData = go
 frontend :: IOData () -> IO ()
 frontend ioData =
     runServer ioData Nothing Nothing $ emptyTree
-
-
--- posts <- getPosts from subreddits
---     getPosts action für frontpage
---     getPosts' :: Monad m => Options PostID -> ListingType -> Maybe SubredditName -> RedditT m PostListing
---
--- getposts from subreddits = for all subreddits get posts with comments
---
--- get posts with comments = for all posts get comments
---
---
--- makeConeTree = §
