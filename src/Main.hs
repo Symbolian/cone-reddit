@@ -117,7 +117,7 @@ postTree ps e =
         e
 
 commentTree :: [C.CommentReference] -> ConeEntry -> ConeTree
-commentTree crs e = node (commentTreeBuilder (take 15 $ crs) [] 1000) e
+commentTree crs e = node (commentTreeBuilder (reverse . take 15 $ crs) [] 1000) e
 
 commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> Integer -> [ConeTree]
 commentTreeBuilder [] ts _ = ts
