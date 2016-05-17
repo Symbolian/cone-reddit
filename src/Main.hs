@@ -47,6 +47,19 @@ main = do
 
     forever . threadDelay $ 60 * 1000 * 1000
 
+entryFromText :: Text.Text -> ConeEntry
+entryFromText t = ConeEntry {
+    ceEntryId       = 0,
+    ceLabel         = t,
+    ceTargetUri     = Nothing,
+    ceComment       = Nothing,
+    ceIconName      = Nothing,
+    ceStlName       = Nothing,
+    ceColor         = Nothing,
+    ceIsLeaf        = False,
+    ceTextId        = t
+}
+
 entryFromPost :: Post -> Integer -> ConeEntry
 entryFromPost p norm = ConeEntry {
     ceEntryId       = 0,
@@ -78,7 +91,7 @@ entryFromComment c norm = ConeEntry {
 colorFromScore :: Integer -> Integer -> ConeColor
 colorFromScore norm i = ConeColor (
         ColAsFloat,
-        cFloats . toRGB $ interpolate ipval (CIELCH 90 20 235, CIELCH 50 80 25)
+        cFloats . toRGB $ interpolate ipval (CIELCH 93 25 120, CIELCH 46 75 21)
     )
     where
         n = (fromIntegral norm) / 100
