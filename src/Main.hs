@@ -37,9 +37,6 @@ subredditPosts sr = do
 
 
 main = do
-    -- let myTree = buildTree posts
-    -- myTree <- subRedditTree posts
-
     ioData <- initServer srvPort baseDir False ()
 
     forkIO $ updater ioData
@@ -143,7 +140,7 @@ updater ioData = go
             sds <- runRedditAnon $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
-                let names = map R ["AskReddit", "Berlin", "de"]
+                let names = map R ["de", "AskReddit", "Berlin", "politics", "fitness", "iama"]
 
                 -- Retrieve post listing from each of the subreddits
                 ps <- mapM subredditPosts names

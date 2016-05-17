@@ -11,7 +11,7 @@ import Data.Text                                (Text)
 baseDir :: FilePath
 baseDir = "/Users/work/code/ConeServer"
 
--- base directory for TweetCone
+-- base directory of cone for reddit
 tcBaseDir :: FilePath
 tcBaseDir = "/Users/work/code/cc-reddit/"
 
@@ -21,4 +21,4 @@ srvPort = 8080
 
 -- show this in upper left hand corner of conecanvas
 domainLabel :: Text
-domainLabel = "AskReddit"
+domainLabel = "Reddit"
