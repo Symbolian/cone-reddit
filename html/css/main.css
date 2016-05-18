@@ -37,6 +37,9 @@
     height: 100%;
 }
 
+#about {
+    min-height: 400px;
+}
 
 #about div:first-child, body, html {
     background-color: #022E3D;
