@@ -140,7 +140,7 @@ updater ioData = go
             sds <- runRedditAnon $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
-                let names = map R ["de", "AskReddit", "Berlin", "politics", "fitness", "iama"]
+                let names = map R ["AskReddit", "AskHistorians", "AskScience", "DataIsBeautiful", "LifeProTips", "TrueReddit", "FoodForThought", "IamA", "InterestingAsFuck"]
 
                 -- Retrieve post listing from each of the subreddits
                 ps <- mapM subredditPosts names
