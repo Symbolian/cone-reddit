@@ -14,6 +14,7 @@ import qualified Reddit.Types.Comment           as C
 import Data.Prizm.Types
 import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
+import Data.Char
 
 import Control.Monad
 import Control.Monad.IO.Class
@@ -52,10 +53,11 @@ entryFromText t = ConeEntry {
     ceComment       = Nothing,
     ceIconName      = Nothing,
     ceStlName       = Nothing,
-    ceColor         = Nothing,
+    ceColor         = Just $ colorFromScore 10000 scoreFromText,
     ceIsLeaf        = False,
     ceTextId        = t
-}
+} where
+    scoreFromText = toInteger . ord . Text.head $ t
 
 entryFromPost :: Post -> Integer -> ConeEntry
 entryFromPost p norm = ConeEntry {
@@ -106,7 +108,9 @@ data SrData = SrData {
 srTree :: [SrData] -> ConeTree
 srTree [] = rootNode []
 srTree sds = rootNode $ fmap (\sd -> postTree (srPosts sd) (srEntry sd)) sds
-    where srEntry sd = entryFromText . Text.pack . show . srName $ sd
+    where
+        srTitle (R t) = t
+        srEntry sd = entryFromText . srTitle . srName $ sd
 
 -- Make a ConeTree from a list of posts in a Subreddit and the Subreddit's entry
 postTree :: [C.PostComments] -> ConeEntry -> ConeTree
@@ -142,14 +146,15 @@ updater ioData = go
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
                 let names = map R ["AskReddit", "AskHistorians", "AskScience", "DataIsBeautiful", "LifeProTips", "TrueReddit", "FoodForThought", "IamA", "InterestingAsFuck"]
+                -- let names = map R ["AskReddit"]
 
                 -- Retrieve post listing from each of the subreddits
                 ps <- mapM subredditPosts names
-                liftIO $ putStrLn "Loaded post listings"
+                liftIO $ putStrLn "Loaded post listings..."
 
                 -- Retrieve comments for each listing
                 ps' <- mapM (mapM (getPostComments . postID)) ps
-                liftIO $ putStrLn "Loaded comments"
+                liftIO $ putStrLn "Loaded comments..."
 
                 return . map (uncurry SrData) $ zip names ps'
 

@@ -19,8 +19,12 @@ leafNode = node []
 
 rootNode :: [ConeTree] -> ConeTree
 rootNode = RoseLeaf
-    emptyLeaf {ceIsLeaf = False, ceTextId = "tId_root", ceLabel = domainLabel}
-    (-1)
+    emptyLeaf {
+        ceIsLeaf    = False,
+        ceTextId    = "tId_root",
+        ceLabel     = domainLabel,
+        ceColor     = Just $ ConeColor (ColAsFloat, [214/255, 19/255, 69/255])
+    } (-1)
 
 prepTree :: ConeTree -> ConeTree
 prepTree c = enumerateTree coneEntrySetId 1 c
