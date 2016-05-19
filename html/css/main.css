@@ -7,27 +7,16 @@
     background-color: #fafafa;
 }
 
-/*
-.breadcrumb {
-    background-color: #fafafa;
-    border-radius: 0;
-    border-bottom: 2px solid #ccc;
-    border: none;
-    padding: 4px 0 8px;
-    margin-bottom: 0
-}
-
-.breadcrumb a {
-    color: #067CA3;
-}
-
-.breadcrumb .active {
-    color: #265D70;
-}*/
-
 .lead {
     padding-bottom: 4px;
     border-bottom: 1px solid #ccc;
+}
+
+.tutorial {
+    background-color: #eaeaea;
+    border-top: 2px solid #999;
+    padding: 6px;
+    margin-left: -3px;
 }
 
 #democontent {
