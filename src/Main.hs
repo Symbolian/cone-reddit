@@ -73,7 +73,7 @@ entryFromPost p norm = ConeEntry {
 entryFromComment :: C.Comment -> Integer -> ConeEntry
 entryFromComment c norm = ConeEntry {
     ceEntryId       = 0,
-    ceLabel         = Text.pack . show . C.author $ c,
+    ceLabel         = label,
     ceTargetUri     = Nothing,
     ceComment       = Nothing,
     ceIconName      = Nothing,
@@ -81,7 +81,8 @@ entryFromComment c norm = ConeEntry {
     ceColor         = (colorFromScore norm) <$> C.score c,
     ceIsLeaf        = True,
     ceTextId        = Text.pack . show . C.commentID $ c
-}
+} where
+    Username label = C.author $ c
 
 -- Create a cone color by interpolating between two color values depending
 -- on the score of the comment/post
