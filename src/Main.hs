@@ -38,7 +38,7 @@ subredditPosts sr = do
 
 
 main = do
-    ioData <- initServer srvPort baseDir False ()
+    ioData <- initServer srvPort tcBaseDir False ()
 
     forkIO $ updater ioData
     forkIO $ frontend ioData

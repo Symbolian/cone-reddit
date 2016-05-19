@@ -31,9 +31,9 @@
 
             <div class='col-sm-5' id='div_canvas'>
                 <div class="canvas-wrapper">
-                    <!-- <canvas id="glcanvas" width="593" height="950"  tabindex="1">
-                        Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.</canvas> -->
-                    <img src="placeholder.png" />
+                    <canvas id="glcanvas" width="593" height="950"  tabindex="1">
+                        Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.</canvas>
+                    <!-- <img src="placeholder.png" /> -->
                 </div>
             </div>
 
@@ -42,7 +42,7 @@
                     <h1>Cone for Reddit</h1>
                     <p class="lead">An interative 3D visualization of Reddit comments</p>
                 </div>
-                <div class="democontent">
+                <div id="democontent">
                     <!-- Home -->
                     <p class="tutorial">
                         <span class="label label-default">
@@ -162,7 +162,7 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 
-    <script type="text/javascript" src="/html/Main.js"></script>
+    <script type="text/javascript" src="/html/js/Main.js"></script>
     <script type="text/javascript">
             // global variables, accessible from PS module
             var gl;
@@ -185,8 +185,8 @@
                     $("#democontent").attr("src", newUrl);
             };
 
-            // window.onload = function() {
-            $( document ).ready(function() {
+            window.onload = function() {
+            // $( document ).ready(function() {
                 globDivCanvas = $('#div_canvas');
 
                 // blur the iframe
