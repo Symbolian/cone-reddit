@@ -129,7 +129,7 @@ commentTreeBuilder [] ts _ = ts
 commentTreeBuilder ((C.Actual c):crs) ts norm =
     commentTreeBuilder crs ((appendCom c):ts) norm
     where appendCom c = node
-            (commentTreeBuilder (contents . C.replies $ c) [] norm)
+            (commentTreeBuilder (reverse . contents . C.replies $ c) [] norm)
             (entryFromComment c norm)
 commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     commentTreeBuilder crs ts norm
