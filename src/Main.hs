@@ -16,6 +16,7 @@ import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
 import Data.Char
 
+import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Monoid
@@ -37,13 +38,7 @@ subredditPosts sr = do
     return $ contents listing
 
 
-main = do
-    ioData <- initServer srvPort tcBaseDir False ()
 
-    forkIO $ updater ioData
-    forkIO $ frontend ioData
-
-    forever . threadDelay $ 60 * 1000 * 1000
 
 entryFromText :: Text.Text -> ConeEntry
 entryFromText t = ConeEntry {
@@ -136,16 +131,25 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     -- commentTreeBuilder crs ((appendRef cr):ts)
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
+main = do
+    token <- initServer srvPort baseDir False
+    putStrLn $ "Starting web server on localhost:" ++ show srvPort
 
+    forkIO $ updater token
+    forkIO $ frontend token
 
-updater :: IOData () -> IO ()
-updater ioData = go
+    forever . threadDelay $ 60 * 1000 * 1000
+
+updater :: (SessionGlobal (), SessionNursery ()) -> IO ()
+updater token@(sessGlobal, _) = go
     where
         go = do
             sds <- runRedditAnon $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
-                let names = map R ["AskReddit", "AskHistorians", "AskScience", "DataIsBeautiful", "LifeProTips", "TrueReddit", "FoodForThought", "IamA", "InterestingAsFuck"]
+                let names = map R ["AskReddit", "AskHistorians", "AskScience",
+                                "DataIsBeautiful", "LifeProTips", "TrueReddit",
+                                "FoodForThought", "IamA", "InterestingAsFuck"]
                 -- let names = map R ["AskReddit"]
 
                 -- Retrieve post listing from each of the subreddits
@@ -162,14 +166,20 @@ updater ioData = go
                 Left msg -> do
                     putStrLn "Error loading data"
                     putStrLn . show $ msg
+
                 Right sds -> do
                     -- Construct ConeTree from collected data
                     let newModel = prepTree . srTree $ sds
 
                     -- Update model with new ConeTree
-                    applyIOSetter ioData newModel setTestModel
+                    gUpdateUserSessions sessGlobal (\sess -> return $ setModel sess newModel)
+
                     putStrLn "Updated cone model"
 
-frontend :: IOData () -> IO ()
-frontend ioData =
-    runServer ioData Nothing Nothing $ emptyTree
+frontend :: (SessionGlobal (), SessionNursery ()) -> IO ()
+frontend token@(sessGlobal, _) =
+    runServer token Nothing Nothing $ initUserSession
+    where
+        initUserSession :: IO (SessionLocal ())
+        initUserSession = return $
+            setModel (emptySessionLocal sessGlobal ()) emptyTree

@@ -7,13 +7,9 @@ import Network.Wai.Handler.Warp                 (Port)
 import Data.Text                                (Text)
 
 
--- base directory for cone server
-baseDir :: FilePath
-baseDir = "/Users/work/code/ConeServer"
-
 -- base directory of cone for reddit
-tcBaseDir :: FilePath
-tcBaseDir = "/Users/work/code/cc-reddit/"
+baseDir :: FilePath
+baseDir = "/Users/work/code/cc-reddit/"
 
 -- cone server port
 srvPort :: Port
