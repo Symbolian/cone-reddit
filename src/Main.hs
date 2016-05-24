@@ -8,7 +8,7 @@ import ConeServer.Utils
 import Reddit
 import Reddit.Types.Post
 import Reddit.Types.Listing
-import Reddit.Types.Subreddit                       (SubredditName(..))
+import Reddit.Types.Subreddit                   (SubredditName(..))
 import qualified Reddit.Types.Comment           as C
 
 import Data.Prizm.Types
@@ -140,7 +140,7 @@ main = do
 
     forever . threadDelay $ 60 * 1000 * 1000
 
-updater :: (SessionGlobal (), SessionNursery ()) -> IO ()
+updater :: ServerToken () -> IO ()
 updater token@(sessGlobal, _) = go
     where
         go = do
@@ -176,7 +176,7 @@ updater token@(sessGlobal, _) = go
 
                     putStrLn "Updated cone model"
 
-frontend :: (SessionGlobal (), SessionNursery ()) -> IO ()
+frontend :: ServerToken () -> IO ()
 frontend token@(sessGlobal, _) =
     runServer token Nothing Nothing $ initUserSession
     where
