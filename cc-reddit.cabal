@@ -25,7 +25,7 @@ executable cc-reddit
     transformers >=0.4,
     text >=1.2,
     warp == 3.2.*,
-    ConeServer,
+    ConeServer == 0.4.0.0,
     hoauth2,
     prizm >= 0.3.1.2
   hs-source-dirs:      src
