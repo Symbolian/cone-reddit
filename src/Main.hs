@@ -16,6 +16,7 @@ import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
 import Data.Char
 
+import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.IO.Class
 import Data.Monoid
@@ -131,24 +132,24 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
 main = do
-    sessGlobal <- initServer srvPort baseDir False
+    token <- initServer srvPort baseDir False
     putStrLn $ "Starting web server on localhost:" ++ show srvPort
 
-    forkIO $ updater sessGlobal
-    forkIO $ frontend sessGlobal
+    forkIO $ updater token
+    forkIO $ frontend token
 
     forever . threadDelay $ 60 * 1000 * 1000
 
-updater :: SessionGlobal -> IO ()
-updater sessGlobal = go
+updater :: (SessionGlobal (), SessionNursery ()) -> IO ()
+updater token@(sessGlobal, _) = go
     where
         go = do
             sds <- runRedditAnon $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
                 let names = map R ["AskReddit", "AskHistorians", "AskScience",
-                    "DataIsBeautiful", "LifeProTips", "TrueReddit",
-                    "FoodForThought", "IamA", "InterestingAsFuck"]
+                                "DataIsBeautiful", "LifeProTips", "TrueReddit",
+                                "FoodForThought", "IamA", "InterestingAsFuck"]
                 -- let names = map R ["AskReddit"]
 
                 -- Retrieve post listing from each of the subreddits
@@ -165,17 +166,19 @@ updater sessGlobal = go
                 Left msg -> do
                     putStrLn "Error loading data"
                     putStrLn . show $ msg
+
                 Right sds -> do
                     -- Construct ConeTree from collected data
                     let newModel = prepTree . srTree $ sds
 
                     -- Update model with new ConeTree
-                    applyIOSetter sessGlobal newModel setTestModel
+                    gUpdateUserSessions sessGlobal (\sess -> return $ setModel sess newModel)
+
                     putStrLn "Updated cone model"
 
-frontend :: SessionGlobal -> IO ()
-frontend sessGlobal =
-    runServer sessGlobal Nothing Nothing $ initUserSession
+frontend :: (SessionGlobal (), SessionNursery ()) -> IO ()
+frontend token@(sessGlobal, _) =
+    runServer token Nothing Nothing $ initUserSession
     where
         initUserSession :: IO (SessionLocal ())
         initUserSession = return $
