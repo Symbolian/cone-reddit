@@ -117,22 +117,21 @@
                     <div class="post_content">
                         <h4 class="text_post">
                             <span class="title">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
-                            <small class="domain">(theguardian.com)</small>
                         </h4>
                         <h4 class="link_post">
                             <span class="title"><a class="source" href="">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</a></span>
-                            <small class="domain"><a href="" class="source_domain">(theguardian.com)</a></small>
+                            <small class="domain"><a href="" class="domain_uri">(theguardian.com)</a></small>
                         </h4>
                         <p class="content">Actual text content</p>
-                        <p><span class="score">32</span> points – <a class="reddit_link" href="localhost:">submitted by <span class="author">me</span></a></p>
+                        <p><span class="score">32</span> points – <a class="permalink" href="localhost:" target="_blank">submitted by <span class="author">me</span></a></p>
                     </div>
 
-                    <!-- Thread -->
+                    <!-- Comments -->
                     <div class="comment_content">
-                        <h4>
+                        <p>
                             <span class="content">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
-                        </h4>
-                        <p><span class="score">32</span> points – <a class="reddit_link" href="localhost:">submitted by <span class="author">me</span></a></p>
+                        </p>
+                        <p class="small"><span class="score">32</span> points – <a class="reddit_link" href="localhost:">submitted by <span class="author">me</span></a></p>
                     </div>
                 </div>
             </div>
@@ -216,10 +215,16 @@
                 }
             }
 
-            function show_post(score, title, content) {
-                console.log("Selected post '" + title + "'");
+            function show_post(score, title, data) {
+                console.log("Selected post '" + title + "' ("+data+")");
 
                 cond_hide_tutorial();
+
+                var contents = data.split('@@');
+                var author = contents[1];
+                var permalink = contents[2];
+                var url = contents[3];
+                var body = contents[4];
 
                 $("#overview").slideUp(function() {
                     $(".subreddit_content").fadeOut(function() {
@@ -229,9 +234,37 @@
                     });
                 });
 
+                if (url != "") {
+                    if (url.indexOf("://") > -1) { domain = url.split('/')[2]; }
+                    else { domain = url.split('/')[0]; }
+
+                    $(".post_content .text_post").hide();
+                    $(".post_content .link_post").show();
+                    $(".post_content .content").hide();
+
+                    $(".post_content .source").attr('href', url);
+
+                    $(".post_content .domain_uri")
+                        .attr('href', url.split('/')[0]);
+                    $(".post_content .domain").html(domain);
+
+                } else {
+                    $(".post_content .text_post").show();
+                    $(".post_content .link_post").hide();
+
+                    if (body != "") {
+                        $(".post_content .content").show();
+                        $(".post_content .content").html("")
+                            .append($.parseHTML(body));
+                    } else {
+                        $(".post_content .content").hide();
+                    }
+                }
+
                 $(".post_content .score").html(score);
                 $(".post_content .title").html(title);
-                $(".post_content .content").html(content);
+                $(".post_content .permalink").attr('href', permalink);
+                $(".post_content .author").html(author);
             }
 
             function show_comment(score, author, content) {
@@ -241,7 +274,9 @@
 
                 $("#overview").slideUp(function() {
                     $(".subreddit_content").fadeOut(function() {
-                        $(".comment_content").fadeIn();
+                        $(".post_content .content").slideUp(function() {
+                            $(".comment_content").fadeIn();
+                        });
                     });
                 });
 

@@ -37,6 +37,7 @@
     list-style-type: none;
     margin-bottom: 2px;
     padding: 3px;
+    border-radius: 3px;
 }
 
 .subreddit_list li.active {
@@ -51,6 +52,15 @@
 
 .subreddit_content, .post_content, .comment_content { display: none; }
 .link_post { display: none; }
+
+.comment_content {
+    border-left: 5px solid #ddd;
+    padding-left: 5px;
+}
+
+.comment_content p:last-child {
+    margin-top -5px;
+}
 
 
 .shape_deco {

@@ -19,9 +19,11 @@ import Data.Char
 import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.IO.Class
+
 import Data.Monoid
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
+import qualified Data.List as List
 import Debug.Trace
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
@@ -36,8 +38,6 @@ subredditPosts :: Monad m => SubredditName -> RedditT m [Post]
 subredditPosts sr = do
     listing <- getPosts' (Options Nothing Nothing) Hot (Just sr)
     return $ contents listing
-
-
 
 
 entryFromText :: Text.Text -> ConeEntry
@@ -67,16 +67,19 @@ entryFromPost p norm = ConeEntry {
     ceTextId        = Text.pack . show . postID $ p
 } where
     postContent = case content p of
-        SelfPost _ html -> html
-        Link uri        -> uri
-        TitleOnly       -> "" :: Text.Text
+        SelfPost _ html -> buildField ["p", (textUsr $ author p), (rLink p), "",  html]
+        Link uri        -> buildField ["p", (textUsr $ author p), (rLink p), uri, ""]
+        TitleOnly       -> buildField ["p", (textUsr $ author p), (rLink p), "",  ""]
+    buildField l = foldl1 Text.append $ List.intersperse "@@" l
+    textUsr (Username t) = t
+    rLink p = Text.append "http://reddit.com" $ permalink p
 
 entryFromComment :: C.Comment -> Integer -> ConeEntry
 entryFromComment c norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = label,
     ceTargetUri     = Just . Text.pack . show . C.score $ c,
-    ceComment       = Just $ Text.append "c" (C.body c),
+    ceComment       = Just $ Text.append "c" (C.bodyHTML c),
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = (colorFromScore norm) <$> C.score c,
