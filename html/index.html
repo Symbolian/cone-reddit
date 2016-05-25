@@ -115,7 +115,8 @@
                             <small class="domain">(theguardian.com)</small>
                         </h1>
                         <p class="content">Actual text content</p>
-
+                        <img class="img_content img-responsive" class="img-responsive" src=""/>
+                        <div class="movie_content"></div>
                         <p><span class="score">32</span> points – <a class="permalink" href="localhost:" target="_blank">submitted by <span class="author">me</span></a></p>
                     </div>
 
@@ -229,29 +230,49 @@
                 var url = contents[3];
                 var body = contents[4];
 
+                // Show appropriate containers
                 $("#overview").slideUp(function() {
-
-                        $(".comment_content").fadeOut(function() {
-                            $(".post_content").fadeIn();
-                        });
-
+                    $(".comment_content").fadeOut(function() {
+                        $(".post_content").fadeIn();
+                    });
                 });
+                $(".img_content").hide();
+                $(".movie_content").hide();
 
                 if (url != "") {
+                    // Extract domain from URL
                     if (url.indexOf("://") > -1) { domain = url.split('/')[2]; }
                     else { domain = url.split('/')[0]; }
 
+                    // Show appropriate containers
                     $(".post_content .text_post").hide();
                     $(".post_content .link_post").show();
                     $(".post_content .content").hide();
 
+                    // Setup link for URL
                     $(".post_content .source").attr('href', url);
                     $(".post_content .domain").html(domain);
 
+                    // Conditional show image
+                    var short_ending = url.substr(-3).toLowerCase();
+                    var long_ending = url.substr(-4).toLowerCase();
+
+                    if ($.inArray(short_ending, ["jpg", "png", "gif"]) >= 0 || long_ending == "jpeg") {
+                        $(".img_content").show();
+                        $(".img_content").attr("src", url);
+                    } else if (long_ending == "gifv") {
+                        var webmsource = url.slice(0,-4) + "webm";
+                        var mp4source = url.slice(0,-4) + "mp4";
+                        $(".movie_content").html("<video class='img-responsive' autoplay='' loop='' muted='' preload=''><source src='"+webmsource+"' type='video/webm'><source src='"+mp4source+"' type='video/mp4'></video>");
+                        $(".movie_content").show();
+                    }
+
                 } else {
+                    // Text post appropriate containers
                     $(".post_content .text_post").show();
                     $(".post_content .link_post").hide();
 
+                    // Show text content if available
                     if (body != "") {
                         $(".post_content .content").show();
                         $(".post_content .content").html("");
@@ -262,8 +283,9 @@
                     }
                 }
 
-                $(".post_content .score").html(score);
+                // Show title and metadata for link
                 $(".post_content .title").html(title);
+                $(".post_content .score").html(score);
                 $(".post_content .permalink").attr('href', permalink);
                 $(".post_content .author").html(author);
             }
