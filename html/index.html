@@ -201,6 +201,7 @@
                     $("#democontent").attr("src", newUrl);
             };
 
+            // Hide the tutorial after five movements outside the top layer
             function cond_hide_tutorial() {
                 if (tutorial_counter == 0) {
                     $(".tutorial").fadeOut();
@@ -209,6 +210,7 @@
                 }
             }
 
+            // Transform escaped html returned by reddit api into dom nodes
             function weird_double_parser(content) {
                 var new_content_esc = $.parseHTML(content);
                 if (new_content_esc.length > 0) {
@@ -219,6 +221,7 @@
                 return new_content;
             }
 
+            // Show post in sidebar when selected in ConeCanvas
             function show_post(score, title, data) {
                 console.log("Selected post '" + title + "' ("+data+")");
 
@@ -290,6 +293,7 @@
                 $(".post_content .author").html(author);
             }
 
+            // Show comment beneath post when selected in ConeCanvas
             function show_comment(score, author, content) {
                 console.log("Selected comment '" + content.substr(0,10) + "...'");
 
@@ -314,6 +318,7 @@
 
             }
 
+            // Highlight subreddits selected in ConeCanvas
             function show_subreddit(name) {
                 console.log("Selected subreddit '"+name+"'");
 
@@ -328,6 +333,7 @@
                     .parent().addClass("bg-primary");
             }
 
+            // Entry point which is called when selection in ConeCanvas changes
             var globSelectedPrim = function (entry) {
                 if (entry.comment.value0[0]=="p") {
                     show_post(entry.targetUri.value0, entry.label,

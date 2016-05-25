@@ -7,6 +7,15 @@
     background-color: #fafafa;
 }
 
+.main_display {
+    background-color: #034256;
+}
+
+.democontent-wrapper {
+    background-color: #fafafa;
+    min-height: 750px;
+}
+
 .lead {
     padding-bottom: 4px;
     border-bottom: 1px solid #ccc;
@@ -30,6 +39,8 @@
 #democontent h2 { font-size: 22px; }
 #democontent h3 { font-size: 20px; }
 #democontent h4 { font-size: 18px; }
+
+/* ----- Overview Styling ----- */
 
 .subreddit_list {
     list-style: none outside none;
@@ -79,6 +90,8 @@
     margin-top -5px;
 }
 
+/* ----- Other elements ----- */
+
 .shape_deco {
     width: 60%;
     float: right;
@@ -114,6 +127,8 @@
 #footer img {
     margin-top: 2em;
 }
+
+/* ----- Canvas ----- */
 
 #glcanvas {
     border: 0px none;

@@ -34,12 +34,6 @@ import Control.Concurrent                       (threadDelay, forkIO)
 import Config
 import ConeUtils
 
-subredditPosts :: Monad m => SubredditName -> RedditT m [Post]
-subredditPosts sr = do
-    listing <- getPosts' (Options Nothing Nothing) Hot (Just sr)
-    return $ contents listing
-
-
 entryFromText :: Text.Text -> ConeEntry
 entryFromText t = ConeEntry {
     ceEntryId       = 0,
@@ -101,6 +95,13 @@ colorFromScore norm i = ConeColor (
         -- Convert components of RGB values used by Prizm color mixer to floats
         cFloats (RGB r g b) = map ((* (1/255)) . fromIntegral) [r, g, b]
 
+-- Retrieve post listings from reddit
+subredditPosts :: Monad m => SubredditName -> RedditT m [Post]
+subredditPosts sr = do
+    listing <- getPosts' (Options Nothing Nothing) Hot (Just sr)
+    return $ contents listing
+
+-- For collecting subreddit name and corresponding post listing
 data SrData = SrData {
     srName      :: SubredditName,
     srPosts     :: [C.PostComments]
@@ -123,9 +124,11 @@ postTree ps e =
         (fmap (\(C.PostComments p crs) -> commentTree crs (entryFromPost p norm)) ps)
         e
 
+-- Base of comment tree
 commentTree :: [C.CommentReference] -> ConeEntry -> ConeTree
 commentTree crs e = node (commentTreeBuilder (reverse . take 15 $ crs) [] 1000) e
 
+-- Recursively descend into comments
 commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> Integer -> [ConeTree]
 commentTreeBuilder [] ts _ = ts
 commentTreeBuilder ((C.Actual c):crs) ts norm =
@@ -138,6 +141,7 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     -- commentTreeBuilder crs ((appendRef cr):ts)
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
+-- Main loop starts two threads for updater and user-facing part
 main = do
     token <- initServer srvPort baseDir False
     putStrLn $ "Starting web server on localhost:" ++ show srvPort
