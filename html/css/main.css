@@ -26,6 +26,11 @@
     height: 100%;
 }
 
+#democontent h1 { font-size: 24px; }
+#democontent h2 { font-size: 22px; }
+#democontent h3 { font-size: 20px; }
+#democontent h4 { font-size: 18px; }
+
 .subreddit_list {
     list-style: none outside none;
     margin-left: 0px;
@@ -53,6 +58,18 @@
 .subreddit_content, .post_content, .comment_content { display: none; }
 .link_post { display: none; }
 
+.post_content .domain:before {
+    content: "(";
+}
+
+.post_content .domain:after {
+    content: ")";
+}
+
+.post_content .source {
+    cursor: pointer;
+}
+
 .comment_content {
     border-left: 5px solid #ddd;
     padding-left: 5px;
@@ -61,7 +78,6 @@
 .comment_content p:last-child {
     margin-top -5px;
 }
-
 
 .shape_deco {
     width: 60%;

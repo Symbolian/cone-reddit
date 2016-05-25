@@ -105,24 +105,17 @@
                         </ul>
                     </div>
 
-                    <!-- Subreddit -->
-                    <div class="subreddit_content">
-                        <h4>
-                            <span class="title">AskReddit</span>
-                        </h4>
-                        <p class="description">A description of the subreddit.</p>
-                    </div>
-
                     <!-- Post -->
                     <div class="post_content">
-                        <h4 class="text_post">
+                        <h1 class="text_post">
                             <span class="title">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
-                        </h4>
-                        <h4 class="link_post">
-                            <span class="title"><a class="source" href="">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</a></span>
-                            <small class="domain"><a href="" class="domain_uri">(theguardian.com)</a></small>
-                        </h4>
+                        </h1>
+                        <h1 class="link_post">
+                            <a class="source" href="" target="_blank"><span class="title">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span></a>
+                            <small class="domain">(theguardian.com)</small>
+                        </h1>
                         <p class="content">Actual text content</p>
+
                         <p><span class="score">32</span> points – <a class="permalink" href="localhost:" target="_blank">submitted by <span class="author">me</span></a></p>
                     </div>
 
@@ -237,11 +230,11 @@
                 var body = contents[4];
 
                 $("#overview").slideUp(function() {
-                    $(".subreddit_content").fadeOut(function() {
+
                         $(".comment_content").fadeOut(function() {
                             $(".post_content").fadeIn();
                         });
-                    });
+
                 });
 
                 if (url != "") {
@@ -253,9 +246,6 @@
                     $(".post_content .content").hide();
 
                     $(".post_content .source").attr('href', url);
-
-                    $(".post_content .domain_uri")
-                        .attr('href', url.split('/')[0]);
                     $(".post_content .domain").html(domain);
 
                 } else {
@@ -284,11 +274,11 @@
                 cond_hide_tutorial();
 
                 $("#overview").slideUp(function() {
-                    $(".subreddit_content").fadeOut(function() {
+
                         $(".post_content .content").slideUp(function() {
                             $(".comment_content").fadeIn();
                         });
-                    });
+
                 });
 
                 $(".comment_content .score").html(score);
