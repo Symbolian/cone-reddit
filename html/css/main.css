@@ -7,6 +7,15 @@
     background-color: #fafafa;
 }
 
+.main_display {
+    background-color: #034256;
+}
+
+.democontent-wrapper {
+    background-color: #fafafa;
+    min-height: 750px;
+}
+
 .lead {
     padding-bottom: 4px;
     border-bottom: 1px solid #ccc;
@@ -26,21 +35,62 @@
     height: 100%;
 }
 
-.my_list {
+#democontent h1 { font-size: 24px; }
+#democontent h2 { font-size: 22px; }
+#democontent h3 { font-size: 20px; }
+#democontent h4 { font-size: 18px; }
+
+/* ----- Overview Styling ----- */
+
+.subreddit_list {
     list-style: none outside none;
     margin-left: 0px;
     padding-left: .5em;
 }
 
-.my_list li {
+.subreddit_list li {
     list-style-image: none;
     list-style-type: none;
     margin-bottom: 2px;
+    padding: 3px;
+    border-radius: 3px;
 }
 
-.my_list li:before {
+.subreddit_list li.active {
+    background-color: red;
+}
+
+.subreddit_list li:before {
     content: "\00BB \0020";
  }
+
+ /* ----- Content styling ----- */
+
+.subreddit_content, .post_content, .comment_content { display: none; }
+.link_post { display: none; }
+
+.post_content .domain:before {
+    content: "(";
+}
+
+.post_content .domain:after {
+    content: ")";
+}
+
+.post_content .source {
+    cursor: pointer;
+}
+
+.comment_content {
+    border-left: 5px solid #ddd;
+    padding-left: 5px;
+}
+
+.comment_content p:last-child {
+    margin-top -5px;
+}
+
+/* ----- Other elements ----- */
 
 .shape_deco {
     width: 60%;
@@ -77,6 +127,8 @@
 #footer img {
     margin-top: 2em;
 }
+
+/* ----- Canvas ----- */
 
 #glcanvas {
     border: 0px none;

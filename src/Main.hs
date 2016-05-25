@@ -19,9 +19,11 @@ import Data.Char
 import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.IO.Class
+
 import Data.Monoid
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
+import qualified Data.List as List
 import Debug.Trace
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
@@ -32,20 +34,12 @@ import Control.Concurrent                       (threadDelay, forkIO)
 import Config
 import ConeUtils
 
-subredditPosts :: Monad m => SubredditName -> RedditT m [Post]
-subredditPosts sr = do
-    listing <- getPosts' (Options Nothing Nothing) Hot (Just sr)
-    return $ contents listing
-
-
-
-
 entryFromText :: Text.Text -> ConeEntry
 entryFromText t = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = t,
     ceTargetUri     = Nothing,
-    ceComment       = Nothing,
+    ceComment       = Just "nothing",
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = Just $ colorFromScore 10000 scoreFromText,
@@ -58,21 +52,28 @@ entryFromPost :: Post -> Integer -> ConeEntry
 entryFromPost p norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = title p,
-    ceTargetUri     = Nothing,
-    ceComment       = Nothing,
+    ceTargetUri     = Just . Text.pack . show . score $ p,
+    ceComment       = Just $ Text.append "p" postContent,
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = Just . (colorFromScore norm) . score $ p,
     ceIsLeaf        = True,
     ceTextId        = Text.pack . show . postID $ p
-}
+} where
+    postContent = case content p of
+        SelfPost _ html -> buildField ["p", (textUsr $ author p), (rLink p), "",  html]
+        Link uri        -> buildField ["p", (textUsr $ author p), (rLink p), uri, ""]
+        TitleOnly       -> buildField ["p", (textUsr $ author p), (rLink p), "",  ""]
+    buildField l = foldl1 Text.append $ List.intersperse "@@" l
+    textUsr (Username t) = t
+    rLink p = Text.append "http://reddit.com" $ permalink p
 
 entryFromComment :: C.Comment -> Integer -> ConeEntry
 entryFromComment c norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = label,
-    ceTargetUri     = Nothing,
-    ceComment       = Nothing,
+    ceTargetUri     = Just . Text.pack . show . C.score $ c,
+    ceComment       = Just $ Text.append "c" (C.bodyHTML c),
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = (colorFromScore norm) <$> C.score c,
@@ -94,6 +95,13 @@ colorFromScore norm i = ConeColor (
         -- Convert components of RGB values used by Prizm color mixer to floats
         cFloats (RGB r g b) = map ((* (1/255)) . fromIntegral) [r, g, b]
 
+-- Retrieve post listings from reddit
+subredditPosts :: Monad m => SubredditName -> RedditT m [Post]
+subredditPosts sr = do
+    listing <- getPosts' (Options Nothing Nothing) Hot (Just sr)
+    return $ contents listing
+
+-- For collecting subreddit name and corresponding post listing
 data SrData = SrData {
     srName      :: SubredditName,
     srPosts     :: [C.PostComments]
@@ -116,9 +124,11 @@ postTree ps e =
         (fmap (\(C.PostComments p crs) -> commentTree crs (entryFromPost p norm)) ps)
         e
 
+-- Base of comment tree
 commentTree :: [C.CommentReference] -> ConeEntry -> ConeTree
 commentTree crs e = node (commentTreeBuilder (reverse . take 15 $ crs) [] 1000) e
 
+-- Recursively descend into comments
 commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> Integer -> [ConeTree]
 commentTreeBuilder [] ts _ = ts
 commentTreeBuilder ((C.Actual c):crs) ts norm =
@@ -131,6 +141,7 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     -- commentTreeBuilder crs ((appendRef cr):ts)
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
+-- Main loop starts two threads for updater and user-facing part
 main = do
     token <- initServer srvPort baseDir False
     putStrLn $ "Starting web server on localhost:" ++ show srvPort
@@ -156,7 +167,7 @@ updater token@(sessGlobal, _) = go
                 ps <- mapM subredditPosts names
                 liftIO $ putStrLn "Loaded post listings..."
 
-                -- Retrieve comments for each listing
+                -- Retrieve comments for each post in each subreddit listing
                 ps' <- mapM (mapM (getPostComments . postID)) ps
                 liftIO $ putStrLn "Loaded comments..."
 
@@ -165,15 +176,17 @@ updater token@(sessGlobal, _) = go
             case sds of
                 Left msg -> do
                     putStrLn "Error loading data"
-                    putStrLn . show $ msg
+                    print msg
+                    putStrLn "Retrying..."
+                    go
 
                 Right sds -> do
                     -- Construct ConeTree from collected data
                     let newModel = prepTree . srTree $ sds
 
                     -- Update model with new ConeTree
-                    gUpdateUserSessions sessGlobal (\sess -> return $ setModel sess newModel)
-
+                    gUpdateUserSessions sessGlobal
+                        (\sess -> return $ setModel sess newModel)
                     putStrLn "Updated cone model"
 
 frontend :: ServerToken () -> IO ()
