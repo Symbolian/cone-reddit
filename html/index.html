@@ -29,14 +29,14 @@
                 Your browser doesn't appear to support the HTML5.</canvas>
             </div>
 
-            <div class='col-sm-5' id='div_canvas'>
+            <div class='col-xs-5' id='div_canvas'>
                 <div class="canvas-wrapper">
                     <canvas id="glcanvas" width="666" height="1000"  tabindex="1">
                         Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.</canvas>
                 </div>
             </div>
 
-            <div class='col-sm-7'>
+            <div class='col-xs-7'>
                 <div class="title">
                     <h1>Cone for Reddit</h1>
                     <p class="lead">An interative 3D visualization of Reddit comments</p>
@@ -215,6 +215,16 @@
                 }
             }
 
+            function weird_double_parser(content) {
+                var new_content_esc = $.parseHTML(content);
+                if (new_content_esc.length > 0) {
+                    var new_content = $.parseHTML(new_content_esc[0].data);
+                } else {
+                    var new_content = new_content_esc;
+                }
+                return new_content;
+            }
+
             function show_post(score, title, data) {
                 console.log("Selected post '" + title + "' ("+data+")");
 
@@ -254,8 +264,9 @@
 
                     if (body != "") {
                         $(".post_content .content").show();
-                        $(".post_content .content").html("")
-                            .append($.parseHTML(body));
+                        $(".post_content .content").html("");
+                        $(".post_content .content").append(
+                            weird_double_parser(body));
                     } else {
                         $(".post_content .content").hide();
                     }
@@ -282,7 +293,12 @@
 
                 $(".comment_content .score").html(score);
                 $(".comment_content .author").html(author);
-                $(".comment_content .content").html(content);
+
+
+
+                $(".comment_content .content").html("");
+                $(".comment_content .content").append(
+                    weird_double_parser(content));
 
             }
 
