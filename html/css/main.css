@@ -7,7 +7,7 @@
     background-color: #fafafa;
 }
 
-.main_display {
+.main-display, .shape_deco {
     background-color: #034256;
 }
 
@@ -15,6 +15,15 @@
     background-color: #fafafa;
     min-height: 750px;
 }
+
+.shape_deco {
+    background-color: #034256;
+    width: 60%;
+    float: right;
+    margin-top: -50px;
+}
+
+.shape_deco img {float: right; width: 645px; height: 85px;}
 
 .lead {
     padding-bottom: 4px;
@@ -90,16 +99,7 @@
     margin-top -5px;
 }
 
-/* ----- Other elements ----- */
-
-.shape_deco {
-    width: 60%;
-    float: right;
-    margin-top: -50px;
-    margin-right: -15px;
-}
-
-.shape_deco img {float: right; width: 645px; height: 85px;}
+/* ----- About and Footer ----- */
 
 #about {
     min-height: 400px;
