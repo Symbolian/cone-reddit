@@ -52,7 +52,7 @@
                             <span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span>
                         </span>
                         &nbsp;
-                        Use left and right arrow keys to <strong>turn the view</strong>.
+                        <strong>Turn the view</strong> with your left and right arrow keys.
                     <br />
                         <span class="label label-default">
                             <span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span>
@@ -62,7 +62,7 @@
                             <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span>
                         </span>
                         &nbsp;
-                        Use up and down arrow keys to <strong>zoom into the view</strong>: From subreddits to posts and down into comments.
+                        <strong>Zoom into the view</strong> using your up and down arrow keys.
                     <br />
                         <span class="label label-default">
                             <span class="glyphicon glyphicon-hand-up" aria-hidden="true"></span>
@@ -71,46 +71,69 @@
                         You can also use your mouse to click entries you want to navigate to.
                     </p>
 
-                    <p>We have chosen to include our own selection of subreddits that we think are interesting to browse:</p>
+                    <div id="overview">
+                        <p>We have chosen to include our own selection of subreddits that we think are interesting to browse:</p>
 
-                    <ul class="my_list">
-                        <li><strong>AskReddit:</strong>
-                            Questions that elicit thought-provoking discussions, as well as some lighter questions which will hopefully entertain.
-                        </li>
-                        <li><strong>AskHistorians:</strong>
-                            Serious, academic-level answers to questions about history.
-                        </li>
-                        <li><strong>AskScience:</strong>
-                            A forum for science questions and scientific answers.
-                        </li>
-                        <li><strong>DataIsBeautiful:</strong>
-                            Data visualizations of all kinds.
-                        </li>
-                        <li><strong>lifeprotips:</strong>
-                            Tips that improve your life in a meaningful way.
-                        </li>
-                        <li><strong>TrueReddit:</strong>
-                            A subreddit for really great, insightful articles and intelligent discussion.
-                        </li>
-                        <li><strong>FoodForThought:</strong>
-                            Intelligent and thought-provoking commentaries on life and culture.
-                        </li>
-                        <li><strong>IamA:</strong>
-                            Interviews with interesting people that can be asked <em>anything</em> by the Reddit community.
-                        </li>
-                        <li><strong>InterestingAsFuck:</strong>
-                            A place to share (almost) anything and everything interesting.
-                        </li>
-                    </ul>
+                        <ul class="subreddit_list">
+                            <li class="bg-primary"><strong>AskReddit</strong>:
+                                <span>Questions that elicit thought-provoking discussions, as well as some lighter questions which will hopefully entertain.</span>
+                            </li>
+                            <li><strong>AskHistorians</strong>:
+                                <span>Serious, academic-level answers to questions about history.</span>
+                            </li>
+                            <li><strong>AskScience</strong>:
+                                <span>A forum for science questions and scientific answers.</span>
+                            </li>
+                            <li><strong>DataIsBeautiful</strong>:
+                                <span>Data visualizations of all kinds.</span>
+                            </li>
+                            <li><strong>LifeProTips</strong>:
+                                <span>Tips that improve your life in a meaningful way.</span>
+                            </li>
+                            <li><strong>TrueReddit</strong>:
+                                <span>A subreddit for really great, insightful articles and intelligent discussion.</span>
+                            </li>
+                            <li><strong>FoodForThought</strong>:
+                                <span>Intelligent and thought-provoking commentaries on life and culture.</span>
+                            </li>
+                            <li><strong>IamA</strong>:
+                                <span>Interviews with interesting people that can be asked <em>anything</em> by the Reddit community.</span>
+                            </li>
+                            <li><strong>InterestingAsFuck</strong>:
+                                <span>A place to share (almost) anything and everything interesting.</span>
+                            </li>
+                        </ul>
+                    </div>
 
                     <!-- Subreddit -->
-                    <!-- <h4>George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters
-                        <small>(theguardian.com)</small>
-                    </h4> -->
+                    <div class="subreddit_content">
+                        <h4>
+                            <span class="title">AskReddit</span>
+                        </h4>
+                        <p class="description">A description of the subreddit.</p>
+                    </div>
 
                     <!-- Post -->
+                    <div class="post_content">
+                        <h4 class="text_post">
+                            <span class="title">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
+                            <small class="domain">(theguardian.com)</small>
+                        </h4>
+                        <h4 class="link_post">
+                            <span class="title"><a class="source" href="">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</a></span>
+                            <small class="domain"><a href="" class="source_domain">(theguardian.com)</a></small>
+                        </h4>
+                        <p class="content">Actual text content</p>
+                        <p><span class="score">32</span> points – <a class="reddit_link" href="localhost:">submitted by <span class="author">me</span></a></p>
+                    </div>
 
                     <!-- Thread -->
+                    <div class="comment_content">
+                        <h4>
+                            <span class="content">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
+                        </h4>
+                        <p><span class="score">32</span> points – <a class="reddit_link" href="localhost:">submitted by <span class="author">me</span></a></p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -167,6 +190,7 @@
             var gl;
             var globDivCanvas;
             var coneAPI;
+            var tutorial_counter = 5;
 
             var globCanvasHide = function() {
                 if (! globDivCanvas.is(":hidden")) {
@@ -184,8 +208,75 @@
                     $("#democontent").attr("src", newUrl);
             };
 
+            function cond_hide_tutorial() {
+                if (tutorial_counter == 0) {
+                    $(".tutorial").fadeOut();
+                } else {
+                    tutorial_counter = tutorial_counter - 1;
+                }
+            }
+
+            function show_post(score, title, content) {
+                console.log("Selected post '" + title + "'");
+
+                cond_hide_tutorial();
+
+                $("#overview").slideUp(function() {
+                    $(".subreddit_content").fadeOut(function() {
+                        $(".comment_content").fadeOut(function() {
+                            $(".post_content").fadeIn();
+                        });
+                    });
+                });
+
+                $(".post_content .score").html(score);
+                $(".post_content .title").html(title);
+                $(".post_content .content").html(content);
+            }
+
+            function show_comment(score, author, content) {
+                console.log("Selected comment '" + content.substr(0,10) + "...'");
+
+                cond_hide_tutorial();
+
+                $("#overview").slideUp(function() {
+                    $(".subreddit_content").fadeOut(function() {
+                        $(".comment_content").fadeIn();
+                    });
+                });
+
+                $(".comment_content .score").html(score);
+                $(".comment_content .author").html(author);
+                $(".comment_content .content").html(content);
+
+            }
+
+            function show_subreddit(name) {
+                console.log("Selected subreddit '"+name+"'");
+
+                $(".post_content").fadeOut(function() {
+                    $(".comment_content").fadeOut(function() {
+                        $("#overview").slideDown();
+                    });
+                });
+
+                $(".subreddit_list li").removeClass("bg-primary");
+                $(".subreddit_list strong:contains('"+name+"')")
+                    .parent().addClass("bg-primary");
+            }
+
             var globSelectedPrim = function (entry) {
-                console.log("globSelectedPrim: " + entry)
+                if (entry.comment.value0[0]=="p") {
+                    show_post(entry.targetUri.value0, entry.label,
+                        entry.comment.value0.slice(1));
+                } else if (entry.comment.value0[0]=="n") {
+                    show_subreddit(entry.label);
+                } else if (entry.comment.value0[0]=="c") {
+                    show_comment(entry.targetUri.value0, entry.label,
+                        entry.comment.value0.slice(1));
+                } else {
+                    alert("Data error. Please reload page");
+                }
             };
 
             window.onload = function() {

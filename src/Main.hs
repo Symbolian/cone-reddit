@@ -45,7 +45,7 @@ entryFromText t = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = t,
     ceTargetUri     = Nothing,
-    ceComment       = Nothing,
+    ceComment       = Just "nothing",
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = Just $ colorFromScore 10000 scoreFromText,
@@ -58,21 +58,25 @@ entryFromPost :: Post -> Integer -> ConeEntry
 entryFromPost p norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = title p,
-    ceTargetUri     = Nothing,
-    ceComment       = Nothing,
+    ceTargetUri     = Just . Text.pack . show . score $ p,
+    ceComment       = Just $ Text.append "p" postContent,
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = Just . (colorFromScore norm) . score $ p,
     ceIsLeaf        = True,
     ceTextId        = Text.pack . show . postID $ p
-}
+} where
+    postContent = case content p of
+        SelfPost _ html -> html
+        Link uri        -> uri
+        TitleOnly       -> "" :: Text.Text
 
 entryFromComment :: C.Comment -> Integer -> ConeEntry
 entryFromComment c norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = label,
-    ceTargetUri     = Nothing,
-    ceComment       = Nothing,
+    ceTargetUri     = Just . Text.pack . show . C.score $ c,
+    ceComment       = Just $ Text.append "c" (C.body c),
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = (colorFromScore norm) <$> C.score c,
@@ -156,7 +160,7 @@ updater token@(sessGlobal, _) = go
                 ps <- mapM subredditPosts names
                 liftIO $ putStrLn "Loaded post listings..."
 
-                -- Retrieve comments for each listing
+                -- Retrieve comments for each post in each subreddit listing
                 ps' <- mapM (mapM (getPostComments . postID)) ps
                 liftIO $ putStrLn "Loaded comments..."
 
@@ -165,15 +169,17 @@ updater token@(sessGlobal, _) = go
             case sds of
                 Left msg -> do
                     putStrLn "Error loading data"
-                    putStrLn . show $ msg
+                    print msg
+                    putStrLn "Retrying..."
+                    go
 
                 Right sds -> do
                     -- Construct ConeTree from collected data
                     let newModel = prepTree . srTree $ sds
 
                     -- Update model with new ConeTree
-                    gUpdateUserSessions sessGlobal (\sess -> return $ setModel sess newModel)
-
+                    gUpdateUserSessions sessGlobal
+                        (\sess -> return $ setModel sess newModel)
                     putStrLn "Updated cone model"
 
 frontend :: ServerToken () -> IO ()

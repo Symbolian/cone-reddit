@@ -26,21 +26,32 @@
     height: 100%;
 }
 
-.my_list {
+.subreddit_list {
     list-style: none outside none;
     margin-left: 0px;
     padding-left: .5em;
 }
 
-.my_list li {
+.subreddit_list li {
     list-style-image: none;
     list-style-type: none;
     margin-bottom: 2px;
+    padding: 3px;
 }
 
-.my_list li:before {
+.subreddit_list li.active {
+    background-color: red;
+}
+
+.subreddit_list li:before {
     content: "\00BB \0020";
  }
+
+ /* ----- Content styling ----- */
+
+.subreddit_content, .post_content, .comment_content { display: none; }
+.link_post { display: none; }
+
 
 .shape_deco {
     width: 60%;
