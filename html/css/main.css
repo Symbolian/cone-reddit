@@ -86,7 +86,7 @@
     content: ")";
 }
 
-.post_content .source {
+.author {
     cursor: pointer;
 }
 
@@ -97,6 +97,10 @@
 
 .comment_content p:last-child {
     margin-top -5px;
+}
+
+#democontent blockquote {
+    font-size: 14px;
 }
 
 /* ----- About and Footer ----- */

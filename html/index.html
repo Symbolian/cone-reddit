@@ -108,24 +108,24 @@
                     <!-- Post -->
                     <div class="post_content">
                         <h1 class="text_post">
-                            <span class="title">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
+                            <span class="title"></span>
                         </h1>
                         <h1 class="link_post">
-                            <a class="source" href="" target="_blank"><span class="title">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span></a>
-                            <small class="domain">(theguardian.com)</small>
+                            <a class="source" href="" target="_blank"><span class="title"></span></a>
+                            <small class="domain"></small>
                         </h1>
-                        <p class="content">Actual text content</p>
+                        <p class="content"></p>
                         <img class="img_content img-responsive" class="img-responsive" src=""/>
                         <div class="movie_content"></div>
-                        <p><span class="score">32</span> points – <a class="permalink" href="localhost:" target="_blank">submitted by <span class="author">me</span></a></p>
+                        <p><span class="score"></span> points – <a class="permalink" href="" target="_blank">submitted by <span class="author"></span></a></p>
                     </div>
 
                     <!-- Comments -->
                     <div class="comment_content">
                         <p>
-                            <span class="content">George RR Martin: Game of Thrones characters die because 'it has to be done' - The Song of Ice and Fire writer has told an interviewer it’s dishonest not to show how war kills heroes as easily as minor characters</span>
+                            <span class="content"></span>
                         </p>
-                        <p class="small"><span class="score">32</span> points – <a class="reddit_link" href="localhost:">submitted by <span class="author">me</span></a></p>
+                        <p class="small"><span class="score"></span> points – <a class="source" href="" target="_blank">submitted by <span class="author"></span></a></p>
                     </div>
                 </div>
             </div>
@@ -223,7 +223,7 @@
 
             // Show post in sidebar when selected in ConeCanvas
             function show_post(score, title, data) {
-                console.log("Selected post '" + title + "' ("+data+")");
+                console.log("Selected post '" + title);
 
                 cond_hide_tutorial();
 
@@ -294,27 +294,32 @@
             }
 
             // Show comment beneath post when selected in ConeCanvas
-            function show_comment(score, author, content) {
-                console.log("Selected comment '" + content.substr(0,10) + "...'");
+            function show_comment(author, data) {
+                var contents = data.split('@@');
+                var comment_id = contents[1];
+                var body = contents[2];
+                var score = contents[3]
+
+                console.log("Selected comment '" + body.substr(0,10) + "...'");
 
                 cond_hide_tutorial();
 
                 $("#overview").slideUp(function() {
-
-                        $(".post_content .content").slideUp(function() {
-                            $(".comment_content").fadeIn();
-                        });
-
+                    $(".post_content .content").slideUp(function() {
+                        $(".comment_content").fadeIn();
+                    });
                 });
 
                 $(".comment_content .score").html(score);
                 $(".comment_content .author").html(author);
 
-
-
                 $(".comment_content .content").html("");
                 $(".comment_content .content").append(
-                    weird_double_parser(content));
+                    weird_double_parser(body));
+
+                var comment_url = $(".post_content .permalink").attr('href')
+                    + comment_id
+                $(".comment_content .source").attr("href", comment_url)
 
             }
 
@@ -341,8 +346,7 @@
                 } else if (entry.comment.value0[0]=="n") {
                     show_subreddit(entry.label);
                 } else if (entry.comment.value0[0]=="c") {
-                    show_comment(entry.targetUri.value0, entry.label,
-                        entry.comment.value0.slice(1));
+                    show_comment(entry.label, entry.comment.value0.slice(1));
                 } else {
                     alert("Data error. Please reload page");
                 }

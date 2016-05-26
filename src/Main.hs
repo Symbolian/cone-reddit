@@ -57,7 +57,7 @@ entryFromPost p norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = title p,
     ceTargetUri     = Just . Text.pack . show . score $ p,
-    ceComment       = Just $ Text.append "p" postContent,
+    ceComment       = Just $ postContent,
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = Just . (colorFromScore norm) . score $ p,
@@ -76,8 +76,8 @@ entryFromComment :: C.Comment -> Integer -> ConeEntry
 entryFromComment c norm = ConeEntry {
     ceEntryId       = 0,
     ceLabel         = label,
-    ceTargetUri     = Just . Text.pack . show . C.score $ c,
-    ceComment       = Just $ Text.append "c" (C.bodyHTML c),
+    ceTargetUri     = Nothing,
+    ceComment       = Just commentContent,
     ceIconName      = Nothing,
     ceStlName       = Nothing,
     ceColor         = (colorFromScore norm) <$> C.score c,
@@ -85,6 +85,16 @@ entryFromComment c norm = ConeEntry {
     ceTextId        = Text.pack . show . C.commentID $ c
 } where
     Username label = C.author $ c
+    commentContent = buildField [
+        "c",
+        (cID . C.commentID $ c),
+        (C.bodyHTML c),
+        (cScore . C.score $ c)]
+    buildField l = foldl1 Text.append $ List.intersperse "@@" l
+    cID (C.CommentID commentID) = commentID
+    cScore :: Maybe Integer -> Text.Text
+    cScore (Just score) = Text.pack . show $ score
+    cScore Nothing = ""
 
 -- Create a cone color by interpolating between two color values depending
 -- on the score of the comment/post
