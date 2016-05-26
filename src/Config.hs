@@ -18,3 +18,7 @@ srvPort = 8080
 -- show this in upper left hand corner of conecanvas
 domainLabel :: Text
 domainLabel = "Reddit"
+
+-- How often is new data added (in minutes)
+updateInterval :: Int
+updateInterval = 15

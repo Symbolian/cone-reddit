@@ -230,7 +230,11 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
                         (\sess -> return $ setModel sess newModel)
-                    putStrLn "Updated cone model"
+                    putStrLn $ List.foldl1 (++)
+                        ["Updated cone model. Next update in ",
+                        (show updateInterval), " minutes."]
+                    threadDelay $ updateInterval * 60 * 1000 * 1000
+                    go
 
 frontend :: MVar ConeTree -> ServerToken () -> IO ()
 frontend mvTree token@(sessGlobal, _) =
