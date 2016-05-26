@@ -198,7 +198,7 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
     threadDelay $ 1 * 1000 * 1000
     where
         go = do
-            sds <- runRedditAnon $ do
+            sds <- runRedditWith redditOptions $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
                 let names = map R ["AskReddit", "AskHistorians", "AskScience",
