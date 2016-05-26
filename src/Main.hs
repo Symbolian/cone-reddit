@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, PatternGuards #-}
 
 import ConeServer.RunServer
 import ConeServer.ConeTypes
@@ -25,6 +25,10 @@ import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import qualified Data.List as List
 import Debug.Trace
+import System.Directory                         (doesDirectoryExist, getCurrentDirectory)
+import System.Environment                       (getArgs)
+import System.IO                                (hSetBuffering, stdout, BufferMode(..))
+import Text.Read                                (readMaybe)
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
 
@@ -143,16 +147,55 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
 
 -- Main loop starts two threads for updater and user-facing part
 main = do
-    token <- initServer srvPort baseDir False
-    putStrLn $ "Starting web server on localhost:" ++ show srvPort
+    baseExists <- doesDirectoryExist baseDir
+    baseDir' <- if baseExists
+        then return baseDir
+        else do
+            cwd <- getCurrentDirectory
+            putStrLn $ baseDir ++ " (hardcoded server root) not found; assuming " ++ cwd
+            return cwd
 
-    forkIO $ updater token
-    forkIO $ frontend token
+    args <- getArgs
+    let
+        srvPort' = case args of
+            "-p":p:_
+                | Just port <- readMaybe p  -> port
+            _                               -> srvPort
 
-    forever . threadDelay $ 60 * 1000 * 1000
+    token <- initServer srvPort' baseDir' False
+    putStrLn $ "Starting web server on localhost:" ++ show srvPort'
 
-updater :: ServerToken () -> IO ()
-updater token@(sessGlobal, _) = go
+    mvUpd  <- newMVar ()
+    mvTree <- newMVar emptyTree
+    forkIO $ updater mvUpd mvTree token
+    forkIO $ frontend mvTree token
+
+    let
+        waitUpdate = do
+            threadDelay $ 1 * 1000 * 1000
+            updRunning <- isEmptyMVar mvUpd
+            if updRunning then waitUpdate else takeMVar mvUpd
+
+        mainLoop "go" = do
+            putMVar mvUpd ()
+            waitUpdate
+            mainLoop ""
+        mainLoop "quit" =
+            return ()
+        mainLoop _ = do
+            putStr "'go' for update; 'quit' to quit >> "
+            getLine >>= mainLoop
+
+    hSetBuffering stdout NoBuffering
+    waitUpdate >> mainLoop ""
+
+
+updater :: MVar () -> MVar ConeTree -> ServerToken () -> IO ()
+updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
+    takeMVar mvUpd
+    go
+    putMVar mvUpd ()
+    threadDelay $ 1 * 1000 * 1000
     where
         go = do
             sds <- runRedditAnon $ do
@@ -183,16 +226,16 @@ updater token@(sessGlobal, _) = go
                 Right sds -> do
                     -- Construct ConeTree from collected data
                     let newModel = prepTree . srTree $ sds
-
+                    swapMVar mvTree newModel
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
                         (\sess -> return $ setModel sess newModel)
                     putStrLn "Updated cone model"
 
-frontend :: ServerToken () -> IO ()
-frontend token@(sessGlobal, _) =
-    runServer token Nothing Nothing $ initUserSession
+frontend :: MVar ConeTree -> ServerToken () -> IO ()
+frontend mvTree token@(sessGlobal, _) =
+    runServer token "REDDIT" Nothing Nothing initUserSession
     where
         initUserSession :: IO (SessionLocal ())
-        initUserSession = return $
-            setModel (emptySessionLocal sessGlobal ()) emptyTree
+        initUserSession =
+            setModel (emptySessionLocal sessGlobal ()) <$> readMVar mvTree
