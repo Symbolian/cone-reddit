@@ -142,8 +142,8 @@
             </div>
             <div class="col-sm-4">
                 <h3>Who made this?</h3>
-                <p><a href="http://symbolian.net/">Symbolian</a> is a company from Berlin that builds tools for knowledge management. This app is a showcase for ConeCanvas, a 3D visualization and ordering-tool for any kind of hierarchical data that we developed.</p>
-                <p>While the data from Reddit in this example is static, <a href="http://symbolian.net/product/">ConeCanvas</a> can also be used to edit and re-order datasets. </p>
+                <p><a href="http://symbolian.net/">Symbolian</a> is a Berlin company that builds tools for knowledge management. This app is a showcase for ConeCanvas, a 3D visualization and ordering-tool for any kind of hierarchical data that we developed.</p>
+                <p>While you can not change the data in this example, <a href="http://symbolian.net/product/">ConeCanvas</a> can also be used to edit and re-order datasets. </p>
             </div>
             <div class="col-sm-4">
                 <h3>How did you do it?</h3>
@@ -151,10 +151,11 @@
             </div>
             <div class="col-sm-4">
                 <h3>Contact</h3>
-                <p>Feel free to get in contact if you are interested in using ConeCanvas yourself.</p>
+                <p>Please get in contact if you are interested in using ConeCanvas for a web site or app.</p>
                 <p>
                 <address>
                   <strong>Symbolian GmbH</strong><br>
+                  <span class="glyphicon glyphicon-envelope" aria-hidden="True"></span>
                   <a href="mailto:info@symbolian.net">info@symbolian.net</a>
                 </address>
                 </p>
@@ -169,7 +170,7 @@
         <!-- About section -->
         <section class="row" id="footer">
             <div class="col-sm-4 col-sm-push-4">
-                <img src="symbolian_logo.png" class="img-responsive" alt="Symbolian Logo">
+                <a href="http://symbolian.net" title="Symbolian GmbH"><img src="symbolian_logo.png" class="img-responsive" alt="Symbolian Logo"></a>
             </div>
         </section>
     </div>
@@ -194,11 +195,6 @@
                 if (globDivCanvas.is(":hidden")) {
                     globDivCanvas.show("slow");
                 }
-            };
-            var globSetURL = function (newUrl) {
-                console.log("globSetURL: " + newUrl)
-                if (newUrl)
-                    $("#democontent").attr("src", newUrl);
             };
 
             // Hide the tutorial after five movements outside the top layer
@@ -340,16 +336,24 @@
 
             // Entry point which is called when selection in ConeCanvas changes
             var globSelectedPrim = function (entry) {
-                if (entry.comment.value0[0]=="p") {
-                    show_post(entry.targetUri.value0, entry.label,
-                        entry.comment.value0.slice(1));
-                } else if (entry.comment.value0[0]=="n") {
-                    show_subreddit(entry.label);
-                } else if (entry.comment.value0[0]=="c") {
-                    show_comment(entry.label, entry.comment.value0.slice(1));
-                } else {
-                    alert("Data error. Please reload page");
+                if ("value0" in entry.comment) {
+                    if (entry.comment.value0[0]=="p") {
+                        show_post(entry.targetUri.value0, entry.label,
+                            entry.comment.value0.slice(1));
+                    } else if (entry.comment.value0[0]=="n") {
+                        show_subreddit(entry.label);
+                    } else if (entry.comment.value0[0]=="c") {
+                        show_comment(entry.label, entry.comment.value0.slice(1));
+                    } else {
+                        alert("Data error. Please reload page");
+                    }
                 }
+            };
+
+            var globSetURL = function (newUrl) {
+                console.log("globSetURL: " + newUrl)
+                if (newUrl)
+                    $("#democontent").attr("src", newUrl);
             };
 
             window.onload = function() {
