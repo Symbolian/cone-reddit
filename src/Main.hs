@@ -221,7 +221,10 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
                 liftIO $ putStrLn "Loaded post listings..."
 
                 -- Retrieve comments for each post in each subreddit listing
-                ps' <- mapM (mapM (getPostComments . postID)) ps
+                ps' <- mapM (\ a -> do
+                    let R cur = subreddit . head $ a
+                    liftIO . print $ cur
+                    mapM (getPostComments . postID) a) ps
                 liftIO $ putStrLn "Loaded comments..."
 
                 return . map (uncurry SrData) $ zip names ps'
