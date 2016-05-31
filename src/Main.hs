@@ -1,9 +1,10 @@
-{-# LANGUAGE OverloadedStrings, PatternGuards #-}
+{-# LANGUAGE OverloadedStrings, PatternGuards, ScopedTypeVariables #-}
 
 import ConeServer.RunServer
 import ConeServer.ConeTypes
 import ConeServer.Types                         (RoseTree(..), enumerateTree)
 import ConeServer.Utils
+import ConeServer.RestAPI
 
 import Reddit
 import Reddit.Types.Post
@@ -15,6 +16,8 @@ import Data.Prizm.Types
 import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
 import Data.Char
+import Data.Maybe
+import Unsafe.Coerce
 
 import Control.Concurrent.MVar
 import Control.Monad
@@ -176,9 +179,9 @@ main = do
     putStrLn $ "Starting web server on localhost:" ++ show srvPort'
 
     mvUpd  <- newMVar ()
-    mvTree <- newMVar emptyTree
-    forkIO $ updater mvUpd mvTree token
-    forkIO $ frontend mvTree token
+    mvData <- newMVar (emptyContent, emptyTree)
+    forkIO $ updater mvUpd mvData token
+    forkIO $ frontend mvData token
 
     let
         waitUpdate = do
@@ -200,8 +203,8 @@ main = do
     waitUpdate >> mainLoop ""
 
 
-updater :: MVar () -> MVar ConeTree -> ServerToken () -> IO ()
-updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
+updater :: MVar () -> MVar SessionData -> ServerToken ContentStore -> IO ()
+updater mvUpd mvData token@(sessGlobal, _) = forever $ do
     takeMVar mvUpd
     go
     putMVar mvUpd ()
@@ -235,21 +238,38 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
 
                 Right sds -> do
                     -- Construct ConeTree from collected data
-                    let newModel = prepTree . srTree $ sds
-                    swapMVar mvTree newModel
+                    let
+                        new@(newContent, newModel) = extractContent . prepTree . srTree $ sds
+                    swapMVar mvData new
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
-                        (\sess -> return $ setModel sess newModel)
+                        (\sess -> return $ setModel (sess {slData = newContent}) newModel)
                     putStrLn $ List.foldl1 (++)
                         ["Updated cone model. Next update in ",
                         (show updateInterval), " minutes."]
                     threadDelay $ updateInterval * 60 * 1000 * 1000
                     go
 
-frontend :: MVar ConeTree -> ServerToken () -> IO ()
-frontend mvTree token@(sessGlobal, _) =
-    runServer token "REDDIT" Nothing Nothing initUserSession
+frontend :: MVar SessionData -> ServerToken ContentStore -> IO ()
+frontend mvData token@(sessGlobal, _) =
+    runServer token "REDDIT" (Just [additionalAPI]) Nothing initUserSession
     where
-        initUserSession :: IO (SessionLocal ())
-        initUserSession =
-            setModel (emptySessionLocal sessGlobal ()) <$> readMVar mvTree
+        initUserSession :: IO (SessionLocal ContentStore)
+        initUserSession = do
+            (content, tree) <- readMVar mvData
+            return $ setModel (emptySessionLocal sessGlobal content) tree
+
+additionalAPI :: RestAPI
+additionalAPI = RestAPI "RedditDemo"
+    [ RestText "content of some reddit post; specify entry via ?id=<number>"
+        ["content"] handlerContent
+    , RestRedirect "start enjoying the reddit demo"
+        [] (RestHandler $ \_ _ -> return $ Just "/html/index.html")
+    ]
+
+handlerContent :: RestHandlerText
+handlerContent = RestHandler $ \(_, params, _) ioData -> do
+    contentStore <- getCustom ioData
+    return $ fromMaybe "" $ do
+        entryId <- getParamInt "id" params
+        lookupContent entryId (unsafeCoerce contentStore)

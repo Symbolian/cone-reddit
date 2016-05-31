@@ -1,13 +1,20 @@
-{-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module ConeUtils where
 
-import Data.Text                                (append)
+import Data.Text                                as T (append, take)
+import Data.Text.Encoding                       (encodeUtf8)
+import qualified Data.IntMap.Lazy               as M
+import qualified Data.ByteString.Lazy.Char8     as BL
 import ConeServer.ConeTypes
 import ConeServer.Types                         (RoseTree(..), enumerateTree)
 
 import Config
 
+
+type ContentStore   = M.IntMap BL.ByteString
+
+type SessionData    = (ContentStore, ConeTree)
 
 -- Utilities for building ConeTrees
 node :: [ConeTree] -> ConeEntry -> ConeTree
@@ -28,3 +35,20 @@ rootNode = RoseLeaf
 
 prepTree :: ConeTree -> ConeTree
 prepTree c = enumerateTree coneEntrySetId 1 c
+
+emptyContent :: ContentStore
+emptyContent = M.empty
+
+lookupContent :: Int -> ContentStore -> Maybe BL.ByteString
+lookupContent = M.lookup
+
+extractContent :: ConeTree -> (ContentStore, ConeTree)
+extractContent t =
+    (foldl getContent M.empty t, truncateContent <$> t)
+  where
+    getContent m ConeEntry {ceComment = Just content, ceEntryId = eId} =
+        M.insert eId (BL.fromStrict . encodeUtf8 $ content) m
+    getContent m _ = m
+
+    truncateContent e@ConeEntry {ceComment = content} =
+        e {ceComment = T.take 1 <$> content}
