@@ -211,9 +211,9 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
             sds <- runRedditWith redditOptions $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
-                let names = map R ["AskReddit", "AskHistorians", "AskScience",
-                                "DataIsBeautiful", "LifeProTips", "TrueReddit",
-                                "FoodForThought", "IamA", "InterestingAsFuck"]
+                let names = map R ["AskReddit", "gifs", "AskScience", "worldnews",
+                                "todayilearned", "AdviceAnimals", "technology",
+                                "woahdude", "IamA", "InterestingAsFuck"]
                 -- let names = map R ["AskReddit"]
 
                 -- Retrieve post listing from each of the subreddits

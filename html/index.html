@@ -78,26 +78,29 @@
                             <li class="bg-primary"><strong>AskReddit</strong>:
                                 <span>Questions that elicit thought-provoking discussions, as well as some lighter questions which will hopefully entertain.</span>
                             </li>
-                            <li><strong>AskHistorians</strong>:
+                            <li><strong>gifs</strong>:
                                 <span>Serious, academic-level answers to questions about history.</span>
                             </li>
                             <li><strong>AskScience</strong>:
                                 <span>A forum for science questions and scientific answers.</span>
                             </li>
-                            <li><strong>DataIsBeautiful</strong>:
+                            <li><strong>worldnews</strong>:
                                 <span>Data visualizations of all kinds.</span>
                             </li>
-                            <li><strong>LifeProTips</strong>:
+                            <li><strong>todayilearned</strong>:
                                 <span>Tips that improve your life in a meaningful way.</span>
                             </li>
-                            <li><strong>TrueReddit</strong>:
+                            <li><strong>AdviceAnimals</strong>:
                                 <span>A subreddit for really great, insightful articles and intelligent discussion.</span>
                             </li>
-                            <li><strong>FoodForThought</strong>:
+                            <li><strong>technology</strong>:
                                 <span>Intelligent and thought-provoking commentaries on life and culture.</span>
                             </li>
-                            <li><strong>IamA</strong>:
+                            <li><strong>woahdude</strong>:
                                 <span>Interviews with interesting people that can be asked <em>anything</em> by the Reddit community.</span>
+                            </li>
+                            <li><strong>IamA</strong>:
+                                <span>A place to share (almost) anything and everything interesting.</span>
                             </li>
                             <li><strong>InterestingAsFuck</strong>:
                                 <span>A place to share (almost) anything and everything interesting.</span>
@@ -333,6 +336,11 @@
                 $(".subreddit_list strong:contains('"+name+"')")
                     .parent().addClass("bg-primary");
             }
+
+            $(".subreddit_list li").click(function() {
+                url = "http://reddit.com/r/" + $(this).children('strong')[0].innerHTML;
+                // ConeInterface.navigateToCone(url);
+            });
 
             // Entry point which is called when selection in ConeCanvas changes
             var globSelectedPrim = function (entry) {
