@@ -239,7 +239,11 @@ updater mvUpd mvData token@(sessGlobal, _) = forever $ do
                 Right sds -> do
                     -- Construct ConeTree from collected data
                     let
-                        new@(newContent, newModel) = extractContent . prepTree . srTree $ sds
+                        fullModel = prepTree . srTree $ sds
+                        new@(newContent, newModel) = extractContent fullModel
+                    putStrLn $ "Payload size full: " ++ show (payloadSize fullModel `div` 1000) ++ "K chars"
+                    putStrLn $ "Payload size reduced: " ++ show (payloadSize newModel `div` 1000) ++ "K chars"
+
                     swapMVar mvData new
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal

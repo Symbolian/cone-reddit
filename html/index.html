@@ -337,7 +337,8 @@
             // Entry point which is called when selection in ConeCanvas changes
             var globSelectedPrim = function (entry) {
                 if ("value0" in entry.comment) {
-                    var comType = entry.comment.value0[0];
+                    var comment = entry.comment.value0;
+                    var comType = comment[0];
 
                     if (comType == "n"){
                         show_subreddit(entry.label);
@@ -360,9 +361,9 @@
 
                         // console.log ("entry object: " + JSON.stringify(entry, null, 2));
                         // TODO entryId seems to be set to 0 in all entry objects
-                        // but we need a numerical id to request content from sever!!
+                        // workaround: serialize entryId in comment fields
 
-                        var ajaxUrl = "/content?id=".concat(entry.entryId.toString());
+                        var ajaxUrl = "/content?id=".concat(comment.slice(1));
                         console.log ("content request: GET " + ajaxUrl);
                         xhr.open("GET", ajaxUrl, true);
                         xhr.timeout = 2000;

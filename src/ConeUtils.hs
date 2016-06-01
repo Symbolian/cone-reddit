@@ -2,7 +2,7 @@
 
 module ConeUtils where
 
-import Data.Text                                as T (append, take)
+import Data.Text                                as T (append, take, pack, length)
 import Data.Text.Encoding                       (encodeUtf8)
 import qualified Data.IntMap.Lazy               as M
 import qualified Data.ByteString.Lazy.Char8     as BL
@@ -42,6 +42,12 @@ emptyContent = M.empty
 lookupContent :: Int -> ContentStore -> Maybe BL.ByteString
 lookupContent = M.lookup
 
+payloadSize :: ConeTree -> Int
+payloadSize = sum . fmap commentSize
+  where
+    commentSize ConeEntry {ceComment = Just content} = T.length content
+    commentSize _ = 0
+
 extractContent :: ConeTree -> (ContentStore, ConeTree)
 extractContent t =
     (foldl getContent M.empty t, truncateContent <$> t)
@@ -50,5 +56,6 @@ extractContent t =
         M.insert eId (BL.fromStrict . encodeUtf8 $ content) m
     getContent m _ = m
 
-    truncateContent e@ConeEntry {ceComment = content} =
-        e {ceComment = T.take 1 <$> content}
+    truncateContent e@ConeEntry {ceComment = Just content, ceEntryId = eId} =
+        e {ceComment = Just $ (T.take 1 content) `append` T.pack (show eId)}
+    truncateContent e = e
