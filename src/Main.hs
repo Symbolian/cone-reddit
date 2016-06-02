@@ -15,6 +15,8 @@ import Data.Aeson
 import Data.Aeson.Types
 import Data.Aeson.Encode.Pretty                 (encodePretty)
 import qualified Data.ByteString.Lazy.Char8     as B
+import qualified Data.ByteString.Char8          as BS (readFile)
+
 import Data.Char
 import qualified Data.List                      as List
 import Data.Maybe                               (fromMaybe)
@@ -24,6 +26,7 @@ import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
+import Control.Exception
 
 import Control.Concurrent.MVar
 import Control.Monad
@@ -33,7 +36,6 @@ import Debug.Trace
 import System.Directory                         (doesDirectoryExist, getCurrentDirectory, doesFileExist)
 import System.Environment                       (getArgs)
 import System.IO                                (hSetBuffering, stdout, BufferMode(..))
-import qualified System.IO.Strict               as Strict
 import Text.Read                                (readMaybe)
 import GHC.Generics
 
@@ -160,28 +162,23 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
 toDisk :: ConeTree -> IO ()
-toDisk tree = do
-    writeFile
-        (baseDir ++ dataFileName)
-        (B.unpack $ encode tree)
+toDisk =
+    B.writeFile dataFileName . encode
 
 fromDisk :: IO (Maybe ConeTree)
 fromDisk = do
     putStrLn "Loading previous ConeTree"
-    let fileName = (baseDir ++ dataFileName)
-    fileExists <- doesFileExist fileName
-    unless fileExists $ writeFile fileName ""
-    c <- Strict.readFile fileName
-    let res = eitherDecode $ B.pack c
-    case res of
+    fileExists <- doesFileExist dataFileName
+    unless fileExists $ writeFile dataFileName ""
+    c <- BS.readFile dataFileName
+    case eitherDecode $ B.fromStrict c of
         Left e -> do
             putStrLn e
             return Nothing
-        Right decoded -> trace (take 1000 $ show decoded) $ return decoded
+        Right decoded -> return $ Just decoded
 
 
-len :: ConeTree -> Int
-len c = length (roseChildren c) + sum (map len (roseChildren c))
+data Updater = Running | Desired deriving Eq
 
 -- Main loop starts two threads for updater and user-facing part
 main = do
@@ -205,25 +202,19 @@ main = do
 
     mDiskTree <- fromDisk
     let diskTree = prepTree $ fromMaybe emptyTree mDiskTree
-    -- trace (take 1000 $ show diskTree) $ return ()
-    print . show $ len diskTree
 
-    mvUpd  <- newMVar ()
-    mvTree <- newMVar $ diskTree
+    mvUpd  <- newMVar Desired
+    mvTree <- newMVar diskTree
 
     forkIO $ frontend mvTree token
     forkIO $ updater mvUpd mvTree token
-
+    forkIO $ forever $ do
+        threadDelay $ updateInterval * 60 * 1000 * 1000
+        tryPutMVar mvUpd Desired
 
     let
-        waitUpdate = do
-            threadDelay $ 1 * 1000 * 1000
-            updRunning <- isEmptyMVar mvUpd
-            if updRunning then waitUpdate else takeMVar mvUpd
-
         mainLoop "go" = do
-            putMVar mvUpd ()
-            waitUpdate
+            tryPutMVar mvUpd Desired
             mainLoop ""
         mainLoop "quit" =
             return ()
@@ -232,15 +223,16 @@ main = do
             getLine >>= mainLoop
 
     hSetBuffering stdout NoBuffering
-    waitUpdate >> mainLoop ""
+    mainLoop ""
 
 
-updater :: MVar () -> MVar ConeTree -> ServerToken () -> IO ()
+updater :: MVar Updater -> MVar ConeTree -> ServerToken () -> IO ()
 updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
-    takeMVar mvUpd
-    go
-    putMVar mvUpd ()
-    threadDelay $ 1 * 1000 * 1000
+    upd <- readMVar mvUpd
+    when (upd == Desired) $ do
+        swapMVar mvUpd Running
+        handle (\(SomeException _ ) -> return ()) go
+        void $ takeMVar mvUpd
     where
         go = do
             sds <- runRedditWith redditOptions $ do
@@ -281,10 +273,12 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
                     swapMVar mvTree newModel
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
-                        (\sess -> return $ setModel sess newModel
-                    putStrLn $ List.foldl1 (++)
-                        ["Updated cone model. Next update in ",
-                        (show updateInterval), " minutes."]
+                        (\sess -> return $ setModel sess newModel)
+                    putStrLn $ concat
+                        [ "Updated cone model. Next update in "
+                        , show updateInterval
+                        , " minutes."
+                        ]
                     threadDelay $ updateInterval * 60 * 1000 * 1000
                     go
 
