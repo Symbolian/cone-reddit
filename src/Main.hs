@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, PatternGuards #-}
+{-# LANGUAGE DeriveGeneric, OverloadedStrings, PatternGuards #-}
 
 import ConeServer.RunServer
 import ConeServer.ConeTypes
@@ -11,24 +11,31 @@ import Reddit.Types.Listing
 import Reddit.Types.Subreddit                   (SubredditName(..))
 import qualified Reddit.Types.Comment           as C
 
+import Data.Aeson
+import Data.Aeson.Types
+import Data.Aeson.Encode.Pretty                 (encodePretty)
+import qualified Data.ByteString.Lazy.Char8     as B
+import Data.Char
+import qualified Data.List                      as List
+import Data.Maybe                               (fromMaybe)
+import Data.Monoid
 import Data.Prizm.Types
 import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
-import Data.Char
+import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 
 import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.IO.Class
 
-import Data.Monoid
-import qualified Data.Text as Text
-import qualified Data.Text.IO as Text
-import qualified Data.List as List
 import Debug.Trace
-import System.Directory                         (doesDirectoryExist, getCurrentDirectory)
+import System.Directory                         (doesDirectoryExist, getCurrentDirectory, doesFileExist)
 import System.Environment                       (getArgs)
 import System.IO                                (hSetBuffering, stdout, BufferMode(..))
+import qualified System.IO.Strict               as Strict
 import Text.Read                                (readMaybe)
+import GHC.Generics
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
 
@@ -38,19 +45,20 @@ import Control.Concurrent                       (threadDelay, forkIO)
 import Config
 import ConeUtils
 
-entryFromText :: Text.Text -> ConeEntry
-entryFromText t = ConeEntry {
+entryFromSRData :: SrData -> ConeEntry
+entryFromSRData sd = ConeEntry {
     ceEntryId       = 0,
-    ceLabel         = t,
+    ceLabel         = subredditTitle,
     ceTargetUri     = Nothing,
     ceComment       = Just "nothing",
     ceIconName      = Nothing,
     ceStlName       = Nothing,
-    ceColor         = Just $ colorFromScore 10000 scoreFromText,
+    ceColor         = Just $ ConeColor(ColAsFloat, [220/255, 187/255, 113/255]),
     ceIsLeaf        = False,
-    ceTextId        = t
+    ceTextId        = subredditTitle
 } where
-    scoreFromText = toInteger . ord . Text.head $ t
+    subredditTitle = srTitle . srName $ sd
+    srTitle (R t) = t
 
 entryFromPost :: Post -> Integer -> ConeEntry
 entryFromPost p norm = ConeEntry {
@@ -92,7 +100,6 @@ entryFromComment c norm = ConeEntry {
         (cScore . C.score $ c)]
     buildField l = foldl1 Text.append $ List.intersperse "@@" l
     cID (C.CommentID commentID) = commentID
-    cScore :: Maybe Integer -> Text.Text
     cScore (Just score) = Text.pack . show $ score
     cScore Nothing = ""
 
@@ -112,7 +119,7 @@ colorFromScore norm i = ConeColor (
 -- Retrieve post listings from reddit
 subredditPosts :: Monad m => SubredditName -> RedditT m [Post]
 subredditPosts sr = do
-    listing <- getPosts' (Options Nothing Nothing) Hot (Just sr)
+    listing <- getPosts' (Reddit.Options Nothing Nothing) Hot (Just sr)
     return $ contents listing
 
 -- For collecting subreddit name and corresponding post listing
@@ -124,10 +131,7 @@ data SrData = SrData {
 -- Make a ConeTree from a list of Subreddit names
 srTree :: [SrData] -> ConeTree
 srTree [] = rootNode []
-srTree sds = rootNode $ fmap (\sd -> postTree (srPosts sd) (srEntry sd)) sds
-    where
-        srTitle (R t) = t
-        srEntry sd = entryFromText . srTitle . srName $ sd
+srTree sds = rootNode $ fmap (\sd -> postTree (srPosts sd) (entryFromSRData sd)) sds
 
 -- Make a ConeTree from a list of posts in a Subreddit and the Subreddit's entry
 postTree :: [C.PostComments] -> ConeEntry -> ConeTree
@@ -155,6 +159,30 @@ commentTreeBuilder ((C.Reference cr _):crs) ts norm =
     -- commentTreeBuilder crs ((appendRef cr):ts)
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
 
+toDisk :: ConeTree -> IO ()
+toDisk tree = do
+    writeFile
+        (baseDir ++ dataFileName)
+        (B.unpack $ encode tree)
+
+fromDisk :: IO (Maybe ConeTree)
+fromDisk = do
+    putStrLn "Loading previous ConeTree"
+    let fileName = (baseDir ++ dataFileName)
+    fileExists <- doesFileExist fileName
+    unless fileExists $ writeFile fileName ""
+    c <- Strict.readFile fileName
+    let res = eitherDecode $ B.pack c
+    case res of
+        Left e -> do
+            putStrLn e
+            return Nothing
+        Right decoded -> trace (take 1000 $ show decoded) $ return decoded
+
+
+len :: ConeTree -> Int
+len c = length (roseChildren c) + sum (map len (roseChildren c))
+
 -- Main loop starts two threads for updater and user-facing part
 main = do
     baseExists <- doesDirectoryExist baseDir
@@ -175,10 +203,17 @@ main = do
     token <- initServer srvPort' baseDir' False
     putStrLn $ "Starting web server on localhost:" ++ show srvPort'
 
+    mDiskTree <- fromDisk
+    let diskTree = prepTree $ fromMaybe emptyTree mDiskTree
+    -- trace (take 1000 $ show diskTree) $ return ()
+    print . show $ len diskTree
+
     mvUpd  <- newMVar ()
-    mvTree <- newMVar emptyTree
-    forkIO $ updater mvUpd mvTree token
+    mvTree <- newMVar $ diskTree
+
     forkIO $ frontend mvTree token
+    forkIO $ updater mvUpd mvTree token
+
 
     let
         waitUpdate = do
@@ -217,15 +252,16 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
                 -- let names = map R ["AskReddit"]
 
                 -- Retrieve post listing from each of the subreddits
+                liftIO $ putStrLn "Retrieving subreddit listings"
                 ps <- mapM subredditPosts names
-                liftIO $ putStrLn "Loaded post listings..."
 
                 -- Retrieve comments for each post in each subreddit listing
-                ps' <- mapM (\ a -> do
-                    let R cur = subreddit . head $ a
-                    liftIO . print $ cur
-                    mapM (getPostComments . postID) a) ps
-                liftIO $ putStrLn "Loaded comments..."
+                ps' <- mapM
+                    (\ a -> do
+                        let R cur = subreddit . head $ a
+                        liftIO . putStrLn $ ("Loading " ++ (Text.unpack cur) ++ " comment data")
+                        mapM (getPostComments . postID) a)
+                    ps
 
                 return . map (uncurry SrData) $ zip names ps'
 
@@ -238,11 +274,14 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
 
                 Right sds -> do
                     -- Construct ConeTree from collected data
-                    let newModel = prepTree . srTree $ sds
+                    let newTree = srTree sds
+                    toDisk newTree
+
+                    let newModel = prepTree newTree
                     swapMVar mvTree newModel
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
-                        (\sess -> return $ setModel sess newModel)
+                        (\sess -> return $ setModel sess newModel
                     putStrLn $ List.foldl1 (++)
                         ["Updated cone model. Next update in ",
                         (show updateInterval), " minutes."]

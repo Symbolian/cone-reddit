@@ -16,3 +16,5 @@ cabal.sandbox.config
 .stack-work/
 
 html/js/Main.js
+
+data/cone.model

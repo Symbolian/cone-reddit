@@ -11,6 +11,10 @@ import Data.Text                                (Text)
 baseDir :: FilePath
 baseDir = "/Users/work/code/cc-reddit/"
 
+-- location at which serialised data is stored
+dataFileName :: FilePath
+dataFileName = "data/cone.model"
+
 -- cone server port
 srvPort :: Port
 srvPort = 8080
