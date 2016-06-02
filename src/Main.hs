@@ -4,6 +4,7 @@ import ConeServer.RunServer
 import ConeServer.ConeTypes
 import ConeServer.Types                         (RoseTree(..), enumerateTree)
 import ConeServer.Utils
+import ConeServer.RestAPI
 
 import Reddit
 import Reddit.Types.Post
@@ -27,6 +28,9 @@ import Data.Prizm.Color.CIE.LCH
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Control.Exception
+import Data.Char
+import Data.Maybe
+import Unsafe.Coerce
 
 import Control.Concurrent.MVar
 import Control.Monad
@@ -204,7 +208,7 @@ main = do
     let diskTree = prepTree $ fromMaybe emptyTree mDiskTree
 
     mvUpd  <- newMVar Desired
-    mvTree <- newMVar diskTree
+    mvTree <- newMVar (extractContent diskTree)
 
     forkIO $ frontend mvTree token
     forkIO $ updater mvUpd mvTree token
@@ -226,7 +230,7 @@ main = do
     mainLoop ""
 
 
-updater :: MVar Updater -> MVar ConeTree -> ServerToken () -> IO ()
+updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> IO ()
 updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
     upd <- readMVar mvUpd
     when (upd == Desired) $ do
@@ -266,26 +270,45 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
 
                 Right sds -> do
                     -- Construct ConeTree from collected data
-                    let newTree = srTree sds
-                    toDisk newTree
+                    let
+                        newTree     = srTree sds
+                        fullModel   = prepTree newTree
+                        new@(newContent, newModel) = extractContent fullModel
+                    putStrLn $ "Payload size full: " ++ show (payloadSize fullModel `div` 1000) ++ "K chars"
+                    putStrLn $ "Payload size reduced: " ++ show (payloadSize newModel `div` 1000) ++ "K chars"
 
-                    let newModel = prepTree newTree
-                    swapMVar mvTree newModel
+                    toDisk newTree
+                    swapMVar mvTree new
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
-                        (\sess -> return $ setModel sess newModel)
+                        (\sess -> return $ setModel (sess {slData = newContent}) newModel)
                     putStrLn $ concat
                         [ "Updated cone model. Next update in "
                         , show updateInterval
                         , " minutes."
                         ]
-                    threadDelay $ updateInterval * 60 * 1000 * 1000
-                    go
 
-frontend :: MVar ConeTree -> ServerToken () -> IO ()
-frontend mvTree token@(sessGlobal, _) =
-    runServer token "REDDIT" Nothing Nothing initUserSession
+
+frontend :: MVar SessionData -> ServerToken ContentStore -> IO ()
+frontend mvData token@(sessGlobal, _) =
+    runServer token "REDDIT" (Just [additionalAPI]) Nothing initUserSession
     where
-        initUserSession :: IO (SessionLocal ())
-        initUserSession =
-            setModel (emptySessionLocal sessGlobal ()) <$> readMVar mvTree
+        initUserSession :: IO (SessionLocal ContentStore)
+        initUserSession = do
+            (content, tree) <- readMVar mvData
+            return $ setModel (emptySessionLocal sessGlobal content) tree
+
+additionalAPI :: RestAPI
+additionalAPI = RestAPI "RedditDemo"
+    [ RestText "content of some reddit post; specify entry via ?id=<number>"
+        ["content"] handlerContent
+    , RestRedirect "start enjoying the reddit demo"
+        [] (RestHandler $ \_ _ -> return $ Just "/html/index.html")
+    ]
+
+handlerContent :: RestHandlerText
+handlerContent = RestHandler $ \(_, params, _) ioData -> do
+    contentStore <- getCustom ioData
+    return $ fromMaybe "" $ do
+        entryId <- getParamInt "id" params
+        lookupContent entryId (unsafeCoerce contentStore)
