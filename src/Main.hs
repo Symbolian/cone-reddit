@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveGeneric, OverloadedStrings, PatternGuards #-}
+{-# LANGUAGE OverloadedStrings, PatternGuards #-}
 
 import ConeServer.RunServer
 import ConeServer.ConeTypes
@@ -41,7 +41,6 @@ import System.Directory                         (doesDirectoryExist, getCurrentD
 import System.Environment                       (getArgs)
 import System.IO                                (hSetBuffering, stdout, BufferMode(..))
 import Text.Read                                (readMaybe)
-import GHC.Generics
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
 
@@ -117,7 +116,7 @@ colorFromScore norm i = ConeColor (
         cFloats . toRGB $ interpolate ipval (CIELCH 93 25 120, CIELCH 46 75 21)
     )
     where
-        n = (fromIntegral norm) / 100
+        n = (fromIntegral norm) / 100 :: Double
         ipval = floor $ log(((fromIntegral i) + n) / n) * 50
         -- Convert components of RGB values used by Prizm color mixer to floats
         cFloats (RGB r g b) = map ((* (1/255)) . fromIntegral) [r, g, b]
@@ -160,7 +159,7 @@ commentTreeBuilder ((C.Actual c):crs) ts norm =
     where appendCom c = node
             (commentTreeBuilder (reverse . contents . C.replies $ c) [] norm)
             (entryFromComment c norm)
-commentTreeBuilder ((C.Reference cr _):crs) ts norm =
+commentTreeBuilder ((C.Reference _ _):crs) ts norm =
     commentTreeBuilder crs ts norm
     -- commentTreeBuilder crs ((appendRef cr):ts)
     -- where appendRef cr = leafNode . entryFromText . Text.pack . show $ cr
@@ -185,6 +184,7 @@ fromDisk = do
 data Updater = Running | Desired deriving Eq
 
 -- Main loop starts two threads for updater and user-facing part
+main :: IO ()
 main = do
     baseExists <- doesDirectoryExist baseDir
     baseDir' <- if baseExists
@@ -231,7 +231,7 @@ main = do
 
 
 updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> IO ()
-updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
+updater mvUpd mvTree (sessGlobal, _) = forever $ do
     upd <- readMVar mvUpd
     when (upd == Desired) $ do
         swapMVar mvUpd Running
@@ -239,7 +239,7 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
         void $ takeMVar mvUpd
     where
         go = do
-            sds <- runRedditWith redditOptions $ do
+            sds_ <- runRedditWith redditOptions $ do
                 liftIO $ putStrLn "Starting update"
                 -- Collect subreddits to be included
                 let names = map R ["AskReddit", "gifs", "AskScience", "worldnews",
@@ -261,7 +261,7 @@ updater mvUpd mvTree token@(sessGlobal, _) = forever $ do
 
                 return . map (uncurry SrData) $ zip names ps'
 
-            case sds of
+            case sds_ of
                 Left msg -> do
                     putStrLn "Error loading data"
                     print msg
