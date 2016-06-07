@@ -19,6 +19,13 @@ Flag release
     Description:    Disables all debugging/testing types, instances and code
     Default:        False
 
+-- for a profiling build, use:
+-- $ cabal configure --flags="release profiling" --enable-executable-profiling
+
+Flag Profiling
+    Description:    Do a profiling build
+    Default:        False
+
 executable cone-reddit
   main-is:             Main.hs
   ghc-options:         -threaded -with-rtsopts=-N
@@ -45,4 +52,8 @@ executable cone-reddit
       cpp-options:        -DRELEASE
       ghc-options:        -O2 -funbox-strict-fields
   else
-      ghc-options:        -Wall -fno-warn-unused-do-bind 
+      ghc-options:        -Wall -fno-warn-unused-do-bind
+
+  if flag(profiling)
+      -- ghc-options:        -auto-all -caf-all
+      ghc-options:        -fprof-auto

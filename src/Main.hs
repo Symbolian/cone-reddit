@@ -40,11 +40,12 @@ import Debug.Trace
 import System.Directory                         (doesDirectoryExist, getCurrentDirectory, doesFileExist)
 import System.Environment                       (getArgs)
 import System.IO                                (hSetBuffering, stdout, BufferMode(..))
+import System.Exit                              (exitSuccess)
 import Text.Read                                (readMaybe)
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
 
-import Control.Concurrent                       (threadDelay, forkIO)
+import Control.Concurrent                       (threadDelay, forkIO, myThreadId)
 -- import Control.DeepSeq
 
 import Config
@@ -200,6 +201,7 @@ main = do
             "-p":p:_
                 | Just port <- readMaybe p  -> port
             _                               -> srvPort
+        static = "--static" `elem` args                                         -- no reddit updates; only use model previously dumped to disk
 
     token <- initServer srvPort' baseDir' False
     putStrLn $ "Starting web server on localhost:" ++ show srvPort'
@@ -210,12 +212,16 @@ main = do
     mvUpd  <- newMVar Desired
     mvTree <- newMVar (extractContent diskTree)
 
-    forkIO $ frontend mvTree token
-    forkIO $ updater mvUpd mvTree token
-    forkIO $ forever $ do
-        threadDelay $ updateInterval * 60 * 1000 * 1000
-        tryPutMVar mvUpd Desired
+    if static
+        then putStrLn "Automatic updates from reddit are disabled"
+        else void $ do
+            forkIO $ updater mvUpd mvTree token
+            forkIO $ forever $ do
+                threadDelay $ updateInterval * 60 * 1000 * 1000
+                tryPutMVar mvUpd Desired
 
+    {-
+    -- forkIO $ frontend mvTree token
     let
         mainLoop "go" = do
             tryPutMVar mvUpd Desired
@@ -228,6 +234,10 @@ main = do
 
     hSetBuffering stdout NoBuffering
     mainLoop ""
+    -}
+    mainThread <- myThreadId
+    forkIO $ threadDelay (60 * 1000 * 1000) >> throwTo mainThread ThreadKilled
+    frontend mvTree token
 
 
 updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> IO ()
