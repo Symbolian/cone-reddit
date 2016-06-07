@@ -5,7 +5,7 @@ name:                cone-reddit
 version:             0.1.0.0
 synopsis:            ConeCanvas for Reddit
 -- description:
-homepage:            github.com/ciex/cc-reddit
+homepage:            github.com/ciex/cone-reddit
 license:             AllRightsReserved
 author:              Vincent Ahrend
 maintainer:          vincent.ahrend@symbolian.net
@@ -45,4 +45,4 @@ executable cone-reddit
       cpp-options:        -DRELEASE
       ghc-options:        -O2 -funbox-strict-fields
   else
-      ghc-options:        -Wall -fno-warn-unused-do-bind
+      ghc-options:        -Wall -fno-warn-unused-do-bind 

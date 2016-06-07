@@ -3,7 +3,7 @@
 echo "Building purescript-conecanvas..."
 cd ../purescript-OntoPanel
 pulp build &&
-psc-bundle -m Main output/**/*.js -o ../cc-reddit/html/js/Main.js &&
-cd ../cc-reddit &&
+psc-bundle -m Main output/**/*.js -o ../cone-reddit/html/js/Main.js &&
+cd ../cone-reddit &&
 
-cabal run -- "$@" 
+cabal run -- "$@"
