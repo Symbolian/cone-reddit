@@ -5,6 +5,7 @@ import ConeServer.ConeTypes
 import ConeServer.Types                         (RoseTree(..), enumerateTree)
 import ConeServer.Utils
 import ConeServer.RestAPI
+import ConeServer.Caching
 
 import Reddit
 import Reddit.Types.Post
@@ -30,7 +31,9 @@ import qualified Data.Text.IO as Text
 import Control.Exception
 import Data.Char
 import Data.Maybe
-import Unsafe.Coerce
+
+import Unsafe.Coerce    (unsafeCoerce)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Control.Concurrent.MVar
 import Control.Monad
@@ -212,10 +215,16 @@ main = do
     mvUpd  <- newMVar Desired
     mvTree <- newMVar (extractContent diskTree)
 
+    cache  <- initConeServerCache 64                                            -- 64MB max size
+    let
+        token' = setRestCache (whitelistCache cachePaths cache) token
+        cachePaths :: [RestPath]
+        cachePaths = [["iconlist"], ["model", "full"]]
+
     if static
         then putStrLn "Automatic updates from reddit are disabled"
         else void $ do
-            forkIO $ updater mvUpd mvTree token
+            forkIO $ updater mvUpd mvTree token' cache
             forkIO $ forever $ do
                 threadDelay $ updateInterval * 60 * 1000 * 1000
                 tryPutMVar mvUpd Desired
@@ -236,18 +245,20 @@ main = do
     mainLoop ""
     -}
     mainThread <- myThreadId
-    forkIO $ threadDelay (60 * 1000 * 1000) >> throwTo mainThread ThreadKilled
-    frontend mvTree token
+    forkIO $ threadDelay (600 * 1000 * 1000) >> throwTo mainThread ThreadKilled
+    frontend mvTree token'
 
 
-updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> IO ()
-updater mvUpd mvTree (sessGlobal, _) = forever $ do
+
+updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> ConeServerCache -> IO ()
+updater mvUpd mvTree token cache = forever $ do
     upd <- readMVar mvUpd
     when (upd == Desired) $ do
         swapMVar mvUpd Running
         handle (\(SomeException _ ) -> return ()) go
         void $ takeMVar mvUpd
     where
+        sessGlobal = getSessionGlobal token
         go = do
             sds_ <- runRedditWith redditOptions $ do
                 liftIO $ putStrLn "Starting update"
@@ -292,6 +303,7 @@ updater mvUpd mvTree (sessGlobal, _) = forever $ do
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
                         (\sess -> return $ setModel (sess {slData = newContent}) newModel)
+                    cacheInvalidate cache ["model", "full"]
                     putStrLn $ concat
                         [ "Updated cone model. Next update in "
                         , show updateInterval
@@ -300,18 +312,13 @@ updater mvUpd mvTree (sessGlobal, _) = forever $ do
 
 
 frontend :: MVar SessionData -> ServerToken ContentStore -> IO ()
-frontend mvData token = do
-    cache <- initConeServerCache 64                                             -- 64MB max size
-    let token' = setRestCache (whitelistCache cachePaths cache) token
-    runServer token' "REDDIT" (Just [additionalAPI]) Nothing initUserSession
-    where
-        initUserSession :: IO (SessionLocal ContentStore)
-        initUserSession = do
-            (content, tree) <- readMVar mvData
-            return $ setModel (emptySessionLocal (getSessionGlobasl token) content) tree
-
-        cachePaths :: [RestPath]
-        cachePaths = [["iconlist"], ["model", "full"]]
+frontend mvData token =
+    runServer token "REDDIT" (Just [additionalAPI]) Nothing initUserSession
+  where
+    initUserSession :: IO (SessionLocal ContentStore)
+    initUserSession = do
+      (content, tree) <- readMVar mvData
+      return $ setModel (emptySessionLocal (getSessionGlobal token) content) tree
 
 additionalAPI :: RestAPI
 additionalAPI = RestAPI "RedditDemo"
