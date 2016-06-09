@@ -300,13 +300,18 @@ updater mvUpd mvTree (sessGlobal, _) = forever $ do
 
 
 frontend :: MVar SessionData -> ServerToken ContentStore -> IO ()
-frontend mvData token@(sessGlobal, _) =
-    runServer token "REDDIT" (Just [additionalAPI]) Nothing initUserSession
+frontend mvData token = do
+    cache <- initConeServerCache 64                                             -- 64MB max size
+    let token' = setRestCache (whitelistCache cachePaths cache) token
+    runServer token' "REDDIT" (Just [additionalAPI]) Nothing initUserSession
     where
         initUserSession :: IO (SessionLocal ContentStore)
         initUserSession = do
             (content, tree) <- readMVar mvData
-            return $ setModel (emptySessionLocal sessGlobal content) tree
+            return $ setModel (emptySessionLocal (getSessionGlobasl token) content) tree
+
+        cachePaths :: [RestPath]
+        cachePaths = [["iconlist"], ["model", "full"]]
 
 additionalAPI :: RestAPI
 additionalAPI = RestAPI "RedditDemo"
