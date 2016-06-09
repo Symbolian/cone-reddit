@@ -81,28 +81,28 @@
                                 <span>Questions that elicit thought-provoking discussions, as well as some lighter questions which will hopefully entertain.</span>
                             </li>
                             <li><strong>gifs</strong>:
-                                <span>Serious, academic-level answers to questions about history.</span>
+                                <span>Animated images.</span>
                             </li>
                             <li><strong>AskScience</strong>:
                                 <span>A forum for science questions and scientific answers.</span>
                             </li>
                             <li><strong>worldnews</strong>:
-                                <span>Data visualizations of all kinds.</span>
+                                <span>Major news from around the world.</span>
                             </li>
                             <li><strong>todayilearned</strong>:
                                 <span>Tips that improve your life in a meaningful way.</span>
                             </li>
                             <li><strong>AdviceAnimals</strong>:
-                                <span>A subreddit for really great, insightful articles and intelligent discussion.</span>
+                                <span>Commentary on life and everything in meme-form.</span>
                             </li>
                             <li><strong>technology</strong>:
-                                <span>Intelligent and thought-provoking commentaries on life and culture.</span>
+                                <span>The latest from the world of technology.</span>
                             </li>
                             <li><strong>woahdude</strong>:
-                                <span>Interviews with interesting people that can be asked <em>anything</em> by the Reddit community.</span>
+                                <span>Trippy and mesmerizing media that make you go "Woah, dude!"</span>
                             </li>
                             <li><strong>IamA</strong>:
-                                <span>A place to share (almost) anything and everything interesting.</span>
+                                <span>Interviews where Reddit users can ask people anything.</span>
                             </li>
                             <li><strong>InterestingAsFuck</strong>:
                                 <span>A place to share (almost) anything and everything interesting.</span>
@@ -131,6 +131,23 @@
                             <span class="content"></span>
                         </p>
                         <p class="small"><span class="score"></span> points – <a class="source" href="" target="_blank">submitted by <span class="author"></span></a></p>
+                    </div>
+
+                    <div class="list-signup">
+                        <p>Are you interested in using <em>Cone for Reddit</em> to browse your own subscribed subreddits, vote and comment on posts? Enter your email below and if there is enough interest we might just build that!</p>
+                        <!-- Begin MailChimp Signup Form -->
+                        <form action="//symbolian.us13.list-manage.com/subscribe/post?u=7ee03945662da5f092ada5d0b&amp;id=57e92b5427" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+                            <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                            <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_7ee03945662da5f092ada5d0b_57e92b5427" tabindex="-1" value=""></div>
+                            <div class="input-group">
+                        	        <input type="email" value="" name="EMAIL" class="email form-control" id="mce-EMAIL" placeholder="email address" required>
+                                    <span class="input-group-btn">
+                                        <input type="submit" value="Subscribe" name="subscribe" class="btn btn-default">
+                                    </span>
+                            </div>
+                        </form>
+
+                        <!--End mc_embed_signup-->
                     </div>
                 </div>
             </div>
@@ -401,9 +418,9 @@
                 // set focus on #glcanvas
                 document.getElementById("glcanvas").focus();
                 // when iframe tries to focus, focus #glcanvas
-                document.getElementById("glcanvas").onblur = function() {
-                    this.focus();
-                };
+                // document.getElementById("glcanvas").onblur = function() {
+                //     this.focus();
+                // };
 
                 var continuation = function (api){
                     return function () {
