@@ -79,6 +79,7 @@ function show_post(score, title, data) {
     });
     $(".img_content").hide();
     $(".movie_content").hide();
+    $(".imgur").hide();
 
     if (url != "") {
         // Extract domain from URL
@@ -106,6 +107,8 @@ function show_post(score, title, data) {
             var mp4source = url.slice(0,-4) + "mp4";
             $(".movie_content").html("<video class='img-responsive' autoplay='' loop='' muted='' preload=''><source src='"+webmsource+"' type='video/webm'><source src='"+mp4source+"' type='video/mp4'></video>");
             $(".movie_content").show();
+        } else if (domain.indexOf("imgur") > -1) {
+            show_imgur(url);
         }
 
     } else {
@@ -129,6 +132,12 @@ function show_post(score, title, data) {
     $(".post_content .score").html(score);
     $(".post_content .permalink").attr('href', permalink);
     $(".post_content .author").html(author);
+}
+
+function show_imgur(url) {
+    matches = url.match(/(a\/)?(\w+)/g);
+    id = matches[matches.length-1];
+    $(".imgur").html('<blockquote class="imgur-embed-pub" lang="en" data-id="'+id+'" data-context="false"><a href="//imgur.com/'+id+'">View post on imgur.com</a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>').show();
 }
 
 // Show comment beneath post when selected in ConeCanvas
