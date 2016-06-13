@@ -87,7 +87,7 @@ entryFromPost p norm = ConeEntry {
         SelfPost _ html -> buildField ["p", (textUsr $ author p), (rLink p), "",  html]
         Link uri        -> buildField ["p", (textUsr $ author p), (rLink p), uri, ""]
         TitleOnly       -> buildField ["p", (textUsr $ author p), (rLink p), "",  ""]
-    buildField l = foldl1 Text.append $ List.intersperse "@@" l
+    buildField l = foldl1 Text.append $ List.intersperse ";-;" l
     textUsr (Username t) = t
     rLink p = Text.append "http://reddit.com" $ permalink p
 
@@ -109,7 +109,7 @@ entryFromComment c norm = ConeEntry {
         (cID . C.commentID $ c),
         (C.bodyHTML c),
         (cScore . C.score $ c)]
-    buildField l = foldl1 Text.append $ List.intersperse "@@" l
+    buildField l = foldl1 Text.append $ List.intersperse ";-;" l
     cID (C.CommentID commentID) = commentID
     cScore (Just score) = Text.pack . show $ score
     cScore Nothing = ""
