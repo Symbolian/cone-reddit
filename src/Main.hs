@@ -47,6 +47,8 @@ import System.Exit                              (exitSuccess)
 import Text.Read                                (readMaybe)
 
 import Network.OAuth.OAuth2.Internal            (AccessToken(..))
+import  Data.Time.Clock.POSIX                   (getPOSIXTime)
+
 
 import Control.Concurrent                       (threadDelay, forkIO, myThreadId)
 -- import Control.DeepSeq
@@ -210,16 +212,26 @@ main = do
     putStrLn $ "Starting web server on localhost:" ++ show srvPort'
 
     mDiskTree <- fromDisk
-    let diskTree = prepTree $ fromMaybe emptyTree mDiskTree
+    let
+        diskTree                = prepTree $ fromMaybe emptyTree mDiskTree
+        (iniContent, iniModel)  = extractContent diskTree
 
-    mvUpd  <- newMVar Desired
-    mvTree <- newMVar (extractContent diskTree)
+    mvUpd   <- newMVar Desired
+    iniTag  <- getTimeStampTag
+    mvTree  <- newMVar (iniContent, iniTag, iniModel)
 
     cache  <- initConeServerCache 64                                            -- 64MB max size
+    preloadStaticFile cache "html/js/Main.js"
+
     let
-        token' = setRestCache (whitelistCache cachePaths cache) token
-        cachePaths :: [RestPath]
-        cachePaths = [["iconlist"], ["model", "full"]]
+        cachePaths :: [(RestPath, CacheKeyModify)]
+        cachePaths =
+            [ (["iconlist"], CacheKeyNoModify)
+            , (["model", "full"], CacheKeyTag)
+            ]
+    mapM_ (whitelistCache cache) cachePaths
+
+    let token' = setRestCache cache token
 
     if static
         then putStrLn "Automatic updates from reddit are disabled"
@@ -294,16 +306,16 @@ updater mvUpd mvTree token cache = forever $ do
                     let
                         newTree     = srTree sds
                         fullModel   = prepTree newTree
-                        new@(newContent, newModel) = extractContent fullModel
+                        (newContent, newModel) = extractContent fullModel
                     putStrLn $ "Payload size full: " ++ show (payloadSize fullModel `div` 1000) ++ "K chars"
                     putStrLn $ "Payload size reduced: " ++ show (payloadSize newModel `div` 1000) ++ "K chars"
 
                     toDisk newTree
-                    swapMVar mvTree new
+                    newTag <- getTimeStampTag
+                    swapMVar mvTree (newContent, newTag, newModel)
                     -- Update model with new ConeTree
                     gUpdateUserSessions sessGlobal
-                        (\sess -> return $ setModel (sess {slData = newContent}) newModel)
-                    cacheInvalidate cache ["model", "full"]
+                        (\sess -> return $ setModel (sess {slData = newContent, slTag = const newTag}) newModel)
                     putStrLn $ concat
                         [ "Updated cone model. Next update in "
                         , show updateInterval
@@ -317,8 +329,13 @@ frontend mvData token =
   where
     initUserSession :: IO (SessionLocal ContentStore)
     initUserSession = do
-      (content, tree) <- readMVar mvData
-      return $ setModel (emptySessionLocal (getSessionGlobal token) content) tree
+      (content, tag, tree) <- readMVar mvData
+      let newSession = (emptySessionLocal (getSessionGlobal token) content) {slTag = const tag}
+      return $ setModel newSession tree
+
+
+getTimeStampTag :: IO Text.Text
+getTimeStampTag = Text.pack . show <$> getPOSIXTime
 
 additionalAPI :: RestAPI
 additionalAPI = RestAPI "RedditDemo"

@@ -2,7 +2,7 @@
 
 module ConeUtils where
 
-import Data.Text                                as T (append, take, pack, length)
+import Data.Text                                as T (Text, append, take, pack, length)
 import Data.Text.Encoding                       (encodeUtf8)
 import qualified Data.IntMap.Lazy               as M
 import qualified Data.ByteString.Lazy.Char8     as BL
@@ -14,7 +14,7 @@ import Config
 
 type ContentStore   = M.IntMap BL.ByteString
 
-type SessionData    = (ContentStore, ConeTree)
+type SessionData    = (ContentStore, Text, ConeTree)
 
 -- Utilities for building ConeTrees
 node :: [ConeTree] -> ConeEntry -> ConeTree
