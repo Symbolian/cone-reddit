@@ -231,7 +231,7 @@
             // Transform escaped html returned by reddit api into dom nodes
             function weird_double_parser(content) {
                 var new_content_esc = $.parseHTML(content);
-                if (new_content_esc.length > 0) {
+                if (new_content_esc && new_content_esc.length > 0) {
                     var new_content = $.parseHTML(new_content_esc[0].data);
                 } else {
                     var new_content = new_content_esc;
@@ -245,7 +245,7 @@
 
                 cond_hide_tutorial();
 
-                var contents = data.split('@@');
+                var contents = data.split(';-;');
                 var author = contents[1];
                 var permalink = contents[2];
                 var url = contents[3];
@@ -313,12 +313,12 @@
 
             // Show comment beneath post when selected in ConeCanvas
             function show_comment(author, data) {
-                var contents = data.split('@@');
+                var contents = data.split(';-;');
                 var comment_id = contents[1];
                 var body = contents[2];
                 var score = contents[3]
 
-                console.log("Selected comment '" + body.substr(0,10) + "...'");
+                // console.log("Selected comment '" + body.substr(0,10) + "...'");
 
                 cond_hide_tutorial();
 
