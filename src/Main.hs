@@ -1,8 +1,11 @@
 {-# LANGUAGE OverloadedStrings, PatternGuards #-}
 
+
+import Config
+import ConeUtils
+
 import ConeServer.RunServer
 import ConeServer.ConeTypes
-import ConeServer.Types                         (RoseTree(..), enumerateTree)
 import ConeServer.Utils
 import ConeServer.RestAPI
 import ConeServer.Caching
@@ -10,51 +13,37 @@ import ConeServer.Caching
 import Reddit
 import Reddit.Types.Post
 import Reddit.Types.Listing
-import Reddit.Types.Subreddit                   (SubredditName(..))
 import qualified Reddit.Types.Comment           as C
 
 import Data.Aeson
-import Data.Aeson.Types
-import Data.Aeson.Encode.Pretty                 (encodePretty)
+-- import Data.Aeson.Encode.Pretty                 (encodePretty)
 import qualified Data.ByteString.Lazy.Char8     as B
 import qualified Data.ByteString.Char8          as BS (readFile)
 
-import Data.Char
 import qualified Data.List                      as List
 import Data.Maybe                               (fromMaybe)
-import Data.Monoid
 import Data.Prizm.Types
 import Data.Prizm.Color
 import Data.Prizm.Color.CIE.LCH
 import qualified Data.Text as Text
-import qualified Data.Text.IO as Text
 import Control.Exception
-import Data.Char
-import Data.Maybe
 
-import Unsafe.Coerce    (unsafeCoerce)
-import System.IO.Unsafe (unsafePerformIO)
+import Unsafe.Coerce                            (unsafeCoerce)
 
 import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.IO.Class
 
-import Debug.Trace
 import System.Directory                         (doesDirectoryExist, getCurrentDirectory, doesFileExist)
 import System.Environment                       (getArgs)
 import System.IO                                (hSetBuffering, stdout, BufferMode(..))
-import System.Exit                              (exitSuccess)
 import Text.Read                                (readMaybe)
 
-import Network.OAuth.OAuth2.Internal            (AccessToken(..))
 import  Data.Time.Clock.POSIX                   (getPOSIXTime)
-
-
 import Control.Concurrent                       (threadDelay, forkIO, myThreadId)
--- import Control.DeepSeq
 
-import Config
-import ConeUtils
+
+
 
 entryFromSRData :: SrData -> ConeEntry
 entryFromSRData sd = ConeEntry {
@@ -89,7 +78,7 @@ entryFromPost p norm = ConeEntry {
         TitleOnly       -> buildField ["p", (textUsr $ author p), (rLink p), "",  ""]
     buildField l = foldl1 Text.append $ List.intersperse ";-;" l
     textUsr (Username t) = t
-    rLink p = Text.append "http://reddit.com" $ permalink p
+    rLink = Text.append "http://reddit.com" . permalink
 
 entryFromComment :: C.Comment -> Integer -> ConeEntry
 entryFromComment c norm = ConeEntry {
@@ -111,8 +100,8 @@ entryFromComment c norm = ConeEntry {
         (cScore . C.score $ c)]
     buildField l = foldl1 Text.append $ List.intersperse ";-;" l
     cID (C.CommentID commentID) = commentID
-    cScore (Just score) = Text.pack . show $ score
-    cScore Nothing = ""
+    cScore = maybe "" (Text.pack . show)
+
 
 -- Create a cone color by interpolating between two color values depending
 -- on the score of the comment/post
@@ -161,8 +150,8 @@ commentTree crs e = node (commentTreeBuilder (reverse . take 15 $ crs) [] 1000) 
 commentTreeBuilder :: [C.CommentReference] -> [ConeTree] -> Integer -> [ConeTree]
 commentTreeBuilder [] ts _ = ts
 commentTreeBuilder ((C.Actual c):crs) ts norm =
-    commentTreeBuilder crs ((appendCom c):ts) norm
-    where appendCom c = node
+    commentTreeBuilder crs (appendCom : ts) norm
+    where appendCom = node
             (commentTreeBuilder (reverse . contents . C.replies $ c) [] norm)
             (entryFromComment c norm)
 commentTreeBuilder ((C.Reference _ _):crs) ts norm =
@@ -207,8 +196,9 @@ main = do
                 | Just port <- readMaybe p  -> port
             _                               -> srvPort
         static = "--static" `elem` args                                         -- no reddit updates; only use model previously dumped to disk
+        config = defaultServerConfig {confPort = srvPort'}
 
-    token <- initServer srvPort' baseDir' False
+    token <- initServer config baseDir' False
     putStrLn $ "Starting web server on localhost:" ++ show srvPort'
 
     mDiskTree <- fromDisk
@@ -236,41 +226,45 @@ main = do
     if static
         then putStrLn "Automatic updates from reddit are disabled"
         else void $ do
-            forkIO $ updater mvUpd mvTree token' cache
+            forkIO $ updater mvUpd mvTree token'
             forkIO $ forever $ do
                 threadDelay $ updateInterval * 60 * 1000 * 1000
                 tryPutMVar mvUpd Desired
 
-    {-
-    -- forkIO $ frontend mvTree token
-    let
-        mainLoop "go" = do
-            tryPutMVar mvUpd Desired
-            mainLoop ""
-        mainLoop "quit" =
-            return ()
-        mainLoop _ = do
-            putStr "'go' for update; 'quit' to quit >> "
-            getLine >>= mainLoop
-
-    hSetBuffering stdout NoBuffering
-    mainLoop ""
-    -}
     mainThread <- myThreadId
-    forkIO $ threadDelay (600 * 1000 * 1000) >> throwTo mainThread ThreadKilled
+
+    let
+        console "go" = do
+            tryPutMVar mvUpd Desired
+            console ""
+        console "quit" =
+            throwTo mainThread ThreadKilled
+        console _ = do
+            putStr "'go' for update; 'quit' to quit >> "
+            getLine >>= console
+
+        autoShutdown minutes =
+            threadDelay (minutes * 60 * 1000 * 1000) >> throwTo mainThread ThreadKilled
+
+    -- this is if you need some kind of admin console
+    --- hSetBuffering stdout NoBuffering >> forkIO (console "")
+
+    -- this is only needed for profiling: there has to be a clean (i.e. not Ctrl-C)
+    -- shutdown of the executable for GHC to evaluate runtime stats for profiling
+    -- forkIO $ autoShutdown 3
+
     frontend mvTree token'
 
 
 
-updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> ConeServerCache -> IO ()
-updater mvUpd mvTree token cache = forever $ do
+updater :: MVar Updater -> MVar SessionData -> ServerToken ContentStore -> IO ()
+updater mvUpd mvTree token = forever $ do
     upd <- readMVar mvUpd
     when (upd == Desired) $ do
         swapMVar mvUpd Running
         handle (\(SomeException _ ) -> return ()) go
         void $ takeMVar mvUpd
     where
-        sessGlobal = getSessionGlobal token
         go = do
             sds_ <- runRedditWith redditOptions $ do
                 liftIO $ putStrLn "Starting update"
@@ -306,16 +300,20 @@ updater mvUpd mvTree token cache = forever $ do
                     let
                         newTree     = srTree sds
                         fullModel   = prepTree newTree
-                        (newContent, newModel) = extractContent fullModel
+                        (content', model') = extractContent fullModel
                     putStrLn $ "Payload size full: " ++ show (payloadSize fullModel `div` 1000) ++ "K chars"
-                    putStrLn $ "Payload size reduced: " ++ show (payloadSize newModel `div` 1000) ++ "K chars"
+                    putStrLn $ "Payload size reduced: " ++ show (payloadSize model' `div` 1000) ++ "K chars"
 
                     toDisk newTree
                     newTag <- getTimeStampTag
-                    swapMVar mvTree (newContent, newTag, newModel)
-                    -- Update model with new ConeTree
-                    gUpdateUserSessions sessGlobal
+                    swapMVar mvTree (content', newTag, model')
+
+                    {-
+                    -- currently, we do not update user's existing sessions with the new model
+                    gUpdateUserSessions (getSessionGlobal token)
                         (\sess -> return $ setModel (sess {slData = newContent, slTag = const newTag}) newModel)
+                    -}
+
                     putStrLn $ concat
                         [ "Updated cone model. Next update in "
                         , show updateInterval
@@ -329,8 +327,8 @@ frontend mvData token =
   where
     initUserSession :: IO (SessionLocal ContentStore)
     initUserSession = do
-      (content, tag, tree) <- readMVar mvData
-      let newSession = (emptySessionLocal (getSessionGlobal token) content) {slTag = const tag}
+      (contStore, tag, tree) <- readMVar mvData
+      let newSession = (emptySessionLocal (getSessionGlobal token) contStore) {slTag = const tag}
       return $ setModel newSession tree
 
 
