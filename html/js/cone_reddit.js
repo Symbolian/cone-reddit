@@ -14,7 +14,6 @@ var coneAPI;
 var tutorial_counter = 5;
 
 $( document ).ready(function() {
-
     // blur the iframe
     $("#democontent").blur();
     // set focus on #glcanvas
@@ -25,6 +24,7 @@ $( document ).ready(function() {
             coneAPI = api;
         };
     };
+    
     PS["Main"].main(continuation)();
 });
 
