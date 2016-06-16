@@ -16,7 +16,6 @@ import Reddit.Types.Listing
 import qualified Reddit.Types.Comment           as C
 
 import Data.Aeson
--- import Data.Aeson.Encode.Pretty                 (encodePretty)
 import qualified Data.ByteString.Lazy.Char8     as B
 import qualified Data.ByteString.Char8          as BS (readFile)
 
@@ -211,7 +210,14 @@ main = do
     mvTree  <- newMVar (iniContent, iniTag, iniModel)
 
     cache  <- initConeServerCache 64                                            -- 64MB max size
-    preloadStaticFile cache "html/js/Main.js"
+    mapM_ (preloadStaticFile cache)
+        [ "html/js/bootstrap.js"
+        , "html/js/cone_reddit.js"
+        , "html/js/cone_reddit.mini.js"
+        , "html/js/jQuery.js"
+        , "html/js/npm.js"
+        , "html/js/offline.js"
+        ]
 
     let
         cachePaths :: [(RestPath, CacheKeyModify)]
@@ -272,7 +278,6 @@ updater mvUpd mvTree token = forever $ do
                 let names = map R ["AskReddit", "gifs", "AskScience", "worldnews",
                                 "todayilearned", "AdviceAnimals", "technology",
                                 "woahdude", "IamA", "InterestingAsFuck"]
-                -- let names = map R ["AskReddit"]
 
                 -- Retrieve post listing from each of the subreddits
                 liftIO $ putStrLn "Retrieving subreddit listings"
