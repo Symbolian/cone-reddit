@@ -5,7 +5,7 @@ name:                cone-reddit
 version:             0.1.0.0
 synopsis:            ConeCanvas for Reddit
 -- description:
-homepage:            github.com/ciex/cone-reddit
+homepage:            github.com/Symbolian/cone-reddit
 license:             AllRightsReserved
 author:              Vincent Ahrend
 maintainer:          vincent.ahrend@symbolian.net
