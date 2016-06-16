@@ -36,3 +36,18 @@ redditOptions = RedditOptions {
     loginMethod             = Anonymous,
     customUserAgent         = Just "symbolian.cone:v.1.0.0 (by /u/RelevantBits)"
 }
+
+-- subreddits to be considered
+subredditNames :: [SubredditName]
+subredditNames = map R
+    [ "AskReddit"
+    , "gifs"
+    , "AskScience"
+    , "worldnews"
+    , "todayilearned"
+    , "AdviceAnimals"
+    , "technology"
+    , "woahdude"
+    , "IamA"
+    , "InterestingAsFuck"
+    ]

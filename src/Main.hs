@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings, PatternGuards #-}
 
-
 import Config
 import ConeUtils
+-- import Favicon
 
 import ConeServer.RunServer
 import ConeServer.ConeTypes
@@ -217,6 +217,7 @@ main = do
         , "html/js/jQuery.js"
         , "html/js/npm.js"
         , "html/js/offline.js"
+        , "favicon.ico"
         ]
 
     let
@@ -274,14 +275,10 @@ updater mvUpd mvTree token = forever $ do
         go = do
             sds_ <- runRedditWith redditOptions $ do
                 liftIO $ putStrLn "Starting update"
-                -- Collect subreddits to be included
-                let names = map R ["AskReddit", "gifs", "AskScience", "worldnews",
-                                "todayilearned", "AdviceAnimals", "technology",
-                                "woahdude", "IamA", "InterestingAsFuck"]
 
                 -- Retrieve post listing from each of the subreddits
                 liftIO $ putStrLn "Retrieving subreddit listings"
-                ps <- mapM subredditPosts names
+                ps <- mapM subredditPosts subredditNames
 
                 -- Retrieve comments for each post in each subreddit listing
                 ps' <- mapM
@@ -291,7 +288,7 @@ updater mvUpd mvTree token = forever $ do
                         mapM (getPostComments . postID) a)
                     ps
 
-                return . map (uncurry SrData) $ zip names ps'
+                return . map (uncurry SrData) $ zip subredditNames ps'
 
             case sds_ of
                 Left msg -> do
