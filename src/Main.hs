@@ -2,7 +2,7 @@
 
 import Config
 import ConeUtils
--- import Favicon
+import Favicon
 
 import ConeServer.RunServer
 import ConeServer.ConeTypes
@@ -217,7 +217,6 @@ main = do
         , "html/js/jQuery.js"
         , "html/js/npm.js"
         , "html/js/offline.js"
-        , "favicon.ico"
         ]
 
     let
@@ -341,6 +340,8 @@ additionalAPI :: RestAPI
 additionalAPI = RestAPI "RedditDemo"
     [ RestText "content of some reddit post; specify entry via ?id=<number>"
         ["content"] handlerContent
+    , RestBinary "favicon handler"
+        ["favicon.ico"] handlerFavicon
     , RestRedirect "start enjoying the reddit demo"
         [] (RestHandler $ \_ _ -> return $ Just "/html/index.html")
     ]
@@ -351,3 +352,6 @@ handlerContent = RestHandler $ \(_, params, _) ioData -> do
     return $ fromMaybe "" $ do
         entryId <- getParamInt "id" params
         lookupContent entryId (unsafeCoerce contentStore)
+
+handlerFavicon :: RestHandlerBinary
+handlerFavicon = RestHandler $ \_ _ -> return favicon
