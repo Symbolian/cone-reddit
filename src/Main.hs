@@ -217,6 +217,7 @@ main = do
         , "html/js/jQuery.js"
         , "html/js/npm.js"
         , "html/js/offline.js"
+        , "html/index.html"
         ]
 
     let
@@ -342,6 +343,8 @@ additionalAPI = RestAPI "RedditDemo"
         ["content"] handlerContent
     , RestBinary "favicon handler"
         ["favicon.ico"] handlerFavicon
+    , RestStatic "the base path for .html, .js and .css files"
+        "html"
     , RestRedirect "start enjoying the reddit demo"
         [] (RestHandler $ \_ _ -> return $ Just "/html/index.html")
     ]
