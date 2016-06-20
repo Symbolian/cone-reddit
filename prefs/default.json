@@ -1,9 +1,9 @@
 {
-  "prefsName"           : "Default3",
+  "prefsName"           : "Cone for Reddit",
   "backColor"           : {"rgb":"0x034256","ambiance":1.0},
   "textColor"           : {"rgb":"0xffffff","ambiance":1.0},
   "textureFrameColor"   : {"rgb":"0x034256","ambiance":0.6},
-  "fontStyle"           : "bold 40px arial",
+  "fontStyle"           : "40px arial",
   "massiveColor"        : {"rgb":"0xe6e6ff","ambiance":1.0},
   "rectColor"           : {"rgb":"0x333333","ambiance":0.5},
   "labelTextBackground" : true,
@@ -24,7 +24,7 @@
   "maxTextLength"       : 30,
   "angleSelectFactor"   : 10.0,
   "angleSelectAddX"     : 0.0,
-  "angleSelectAddY"     : -0.1,
+  "angleSelectAddY"     : -0.3,
 
   "desiredZoomHint"     : 4.5,
 
@@ -37,9 +37,15 @@
   "coneHeight"          : 2.9,
   "windowsRatio"        : 0.6666,
   "labelRatio"          : 1.3,
-  "cameraDistZ"         : 6.0,
+  "cameraDistZ"         : 7.0,
   "upperOffset"         : 0.0,
 
 
-  "controlAreaInitialVisible" : true
+  "controlAreaInitialVisible" : true,
+  "minChildSize" : 30.0,
+  "minIconSize"  : 150.0,
+  "minLabelSize" : 350.0,
+
+  "keyEventsFromWindow" : true,
+  "labelEllipticalFactor" : 1.0
 }
