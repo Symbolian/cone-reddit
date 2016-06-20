@@ -9,7 +9,7 @@
 
 .main-display, .shape_deco {
     background-color: #034256;
-    background-image: url('../bgrnd.png');
+    background-image: url('../img/bgrnd.png');
     background-repeat: repeat-x;
     background-position: bottom;
 }

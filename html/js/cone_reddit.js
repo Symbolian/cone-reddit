@@ -26,6 +26,7 @@ $(document).ready(function () {
 
     var continuation = function (api) {
         return function () {
+            $('.spinner').hide();
             coneAPI = api;
         };
     };
