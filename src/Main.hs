@@ -213,7 +213,7 @@ main = do
 
 #ifdef RELEASE
     mapM_ (preloadStaticFile cache)
-        [ "html/js/cone_reddit.min.js"
+        [ "html/js/cone_reddit.mini.js"
         , "html/index.html"
         ]
 #endif
