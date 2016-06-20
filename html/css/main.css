@@ -7,13 +7,6 @@
     background-color: #fafafa;
 }
 
-.main-display, .shape_deco {
-    background-color: #034256;
-    background-image: url('../img/bgrnd.png');
-    background-repeat: repeat-x;
-    background-position: bottom;
-}
-
 .democontent-wrapper {
     background-color: #fafafa;
     min-height: 750px;
