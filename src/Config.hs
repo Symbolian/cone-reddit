@@ -50,7 +50,7 @@ redditOptions :: RedditOptions
 redditOptions = RedditOptions
     { rateLimitingEnabled   = True
     , connectionManager     = Nothing
-    , loginMethod           = Anonymous,
+    , loginMethod           = Anonymous
     , customUserAgent       = Just "symbolian.cone:v.1.0.0 (by /u/RelevantBits)"
     }
 
