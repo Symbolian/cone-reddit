@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, PatternGuards #-}
+{-# LANGUAGE CPP, OverloadedStrings, PatternGuards #-}
 
 import Config
 import ConeUtils
@@ -210,15 +210,13 @@ main = do
     mvTree  <- newMVar (iniContent, iniTag, iniModel)
 
     cache  <- initConeServerCache 64                                            -- 64MB max size
+
+#ifdef RELEASE
     mapM_ (preloadStaticFile cache)
-        [ "html/js/bootstrap.js"
-        , "html/js/cone_reddit.js"
-        , "html/js/cone_reddit.mini.js"
-        , "html/js/jQuery.js"
-        , "html/js/npm.js"
-        , "html/js/offline.js"
+        [ "html/js/cone_reddit.min.js"
         , "html/index.html"
         ]
+#endif
 
     let
         cachePaths :: [(RestPath, CacheKeyModify)]
