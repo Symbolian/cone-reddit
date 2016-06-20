@@ -40,7 +40,7 @@
   </head>
   <body id="body_pres">
 
-    <div class="container">
+    <div class="container-fluid">
         <!-- Main content -->
         <section class="row main-display">
             <!--  Should not be visible-->
@@ -154,7 +154,16 @@
                         <p class="small"><span class="score"></span> points – <a class="source" href="" target="_blank">submitted by <span class="author"></span></a></p>
                     </div>
 
-                    <div class="list-signup">
+                    <div class="about col-sm-10">
+                        <p class="lead">About this project</p>
+                        <h3>Who made this?</h3>
+                        <p><a href="http://symbolian.net/">Symbolian</a> is a Berlin company that builds tools for knowledge management. This app is a showcase for ConeCanvas, a 3D visualization and ordering-tool for any kind of hierarchical data that we developed.</p>
+                        <p>While you can not change the data in this example, <a href="http://symbolian.net/product/">ConeCanvas</a> can also be used to edit and re-order datasets. </p>
+
+                        <h3>How did you do it?</h3>
+                        <p>Post and comment data is loaded into ConeCanvas from the <a href="https://www.reddit.com/dev/api">Reddit API</a> using the <a href="https://hackage.haskell.org/package/reddit-0.2.0.0">Haskell reddit package</a>. ConeCanvas renders the cone tree using Symbolian's <a href="https://github.com/jutaro/purescript-webgl"> Purescript bindings for WebGL</a>.</p>
+
+                        <h3>Want more?</h3>
                         <p>Are you interested in using <em>Cone for Reddit</em> to browse your own subscribed subreddits, vote and comment on posts? Enter your email below and if there is enough interest we might just build that!</p>
                         <!-- Begin MailChimp Signup Form -->
                         <form action="//symbolian.us13.list-manage.com/subscribe/post?u=7ee03945662da5f092ada5d0b&amp;id=57e92b5427" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
@@ -167,42 +176,19 @@
                                     </span>
                             </div>
                         </form>
-
                         <!--End mc_embed_signup-->
+
+                        <h3>Contact</h3>
+                        <p>Please get in contact if you are interested in using ConeCanvas for a web site or app.</p>
+                        <p>
+                            <a href="mailto:info@symbolian.net" class="btn btn-default" role="button"><span class="glyphicon glyphicon-envelope" aria-hidden="True"></span> info@symbolian.net</a>
+                        </p>
+                        <p>Please see the
+                        <a href="http://symbolian.net/privacy/">privacy policy</a> and
+                        <a href="http://symbolian.net/terms-and-conditions/">terms and conditions</a>
+                        for using this website.</p>
                     </div>
                 </div>
-            </div>
-        </section>
-
-
-        <!-- About section -->
-        <section class="row" id="about">
-            <div class="col-sm-12">
-                <h2>About this project</h2>
-            </div>
-            <div class="col-sm-4">
-                <h3>Who made this?</h3>
-                <p><a href="http://symbolian.net/">Symbolian</a> is a Berlin company that builds tools for knowledge management. This app is a showcase for ConeCanvas, a 3D visualization and ordering-tool for any kind of hierarchical data that we developed.</p>
-                <p>While you can not change the data in this example, <a href="http://symbolian.net/product/">ConeCanvas</a> can also be used to edit and re-order datasets. </p>
-            </div>
-            <div class="col-sm-4">
-                <h3>How did you do it?</h3>
-                <p>Post and comment data is loaded into ConeCanvas from the <a href="https://www.reddit.com/dev/api">Reddit API</a> using the <a href="https://hackage.haskell.org/package/reddit-0.2.0.0">Haskell reddit package</a>. ConeCanvas renders the cone tree using Symbolian's <a href="https://github.com/jutaro/purescript-webgl"> Purescript bindings for WebGL</a>.</p>
-            </div>
-            <div class="col-sm-4">
-                <h3>Contact</h3>
-                <p>Please get in contact if you are interested in using ConeCanvas for a web site or app.</p>
-                <p>
-                <address>
-                  <strong>Symbolian GmbH</strong><br>
-                  <span class="glyphicon glyphicon-envelope" aria-hidden="True"></span>
-                  <a href="mailto:info@symbolian.net">info@symbolian.net</a>
-                </address>
-                </p>
-                <p>Please see the
-                <a href="http://symbolian.net/privacy/">privacy policy</a> and
-                <a href="http://symbolian.net/terms-and-conditions/">terms and conditions</a>
-                for using this website.</p>
             </div>
         </section>
 

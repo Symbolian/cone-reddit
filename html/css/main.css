@@ -111,10 +111,8 @@
 
 /* ----- List signup ----- */
 
-.list-signup {
-    margin: 100px -15px;
-    border-top: 1px solid #999;
-    padding: 15px;
+.about {
+    margin-top: 100px;
 }
 
 /* ----- About and Footer ----- */
@@ -143,7 +141,7 @@
 }
 
 #footer img {
-    margin-top: 2em;
+    margin-top: 4em;
 }
 
 /* ----- Canvas ----- */
