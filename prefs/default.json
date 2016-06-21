@@ -42,9 +42,9 @@
 
 
   "controlAreaInitialVisible" : true,
-  "minChildSize" : 30.0,
-  "minIconSize"  : 150.0,
-  "minLabelSize" : 350.0,
+  "minChildSize" : 100.0,
+  "minIconSize"  : 200.0,
+  "minLabelSize" : 300.0,
 
   "keyEventsFromWindow" : true,
   "labelEllipticalFactor" : 1.0
