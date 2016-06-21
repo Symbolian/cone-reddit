@@ -51,14 +51,16 @@
                       Your browser doesn't appear to support the HTML5.</canvas>
             </div>
 
-            <div class='col-xs-5' id='div_canvas'>
+            <div class='col-sm-5' id='div_canvas'>
                 <div class="canvas-wrapper">
                     <canvas id="glcanvas" width="666" height="1000"  tabindex="1">
-                        Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.</canvas>
+                        Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+                    </canvas>
+                        <div class="loader">Loading...</div>
                 </div>
             </div>
 
-            <div class='col-xs-7 democontent-wrapper'>
+            <div class='col-sm-7 democontent-wrapper'>
                 <div class="title">
                     <h1>Cone for Reddit</h1>
                     <p class="lead">An interative 3D visualization of Reddit comments</p>
@@ -151,17 +153,14 @@
                         <p>
                             <span class="content"></span>
                         </p>
-                        <p class="small"><span class="score"></span> points – <a class="source" href="" target="_blank">submitted by <span class="author"></span></a></p>
+                        <p class="small"><span class="score"></span> points – <a class="source" href="" target="_blank">comment by <span class="author"></span></a></p>
                     </div>
 
                     <div class="about col-sm-10">
                         <p class="lead">About this project</p>
                         <h3>Who made this?</h3>
-                        <p><a href="http://symbolian.net/">Symbolian</a> is a Berlin company that builds tools for knowledge management. This app is a showcase for ConeCanvas, a 3D visualization and ordering-tool for any kind of hierarchical data that we developed.</p>
+                        <p><a href="http://symbolian.net/">Symbolian</a> is a Berlin company that builds tools for knowledge management. This app is a showcase for ConeCanvas, a 3D visualization and ordering-tool for any kind of hierarchical data. Learn more about ConeCanvas <a href="http://symbolian.net/">on our website</a>.</p>
                         <p>While you can not change the data in this example, <a href="http://symbolian.net/product/">ConeCanvas</a> can also be used to edit and re-order datasets. </p>
-
-                        <h3>How did you do it?</h3>
-                        <p>Post and comment data is loaded into ConeCanvas from the <a href="https://www.reddit.com/dev/api">Reddit API</a> using the <a href="https://hackage.haskell.org/package/reddit-0.2.0.0">Haskell reddit package</a>. ConeCanvas renders the cone tree using Symbolian's <a href="https://github.com/jutaro/purescript-webgl"> Purescript bindings for WebGL</a>.</p>
 
                         <h3>Want more?</h3>
                         <p>Are you interested in using <em>Cone for Reddit</em> to browse your own subscribed subreddits, vote and comment on posts? Enter your email below and if there is enough interest we might just build that!</p>
@@ -177,6 +176,9 @@
                             </div>
                         </form>
                         <!--End mc_embed_signup-->
+
+                        <h3>How did you do it?</h3>
+                        <p>Post and comment data is loaded into ConeCanvas from the <a href="https://www.reddit.com/dev/api">Reddit API</a> using the <a href="https://hackage.haskell.org/package/reddit-0.2.0.0">Haskell reddit package</a>. ConeCanvas renders the cone tree using Symbolian's <a href="https://github.com/jutaro/purescript-webgl"> Purescript bindings for WebGL</a>.</p>
 
                         <h3>Contact</h3>
                         <p>Please get in contact if you are interested in using ConeCanvas for a web site or app.</p>
@@ -201,13 +203,8 @@
         </section>
     </div>
     <script type="text/javascript" src="/html/js/cone_reddit.mini.js"></script>
-    <!-- <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
-    <script type="text/javascript" src="/html/js/Main.js"></script>
-    <script type="text/javascript" src="/html/js/cone_reddit.js"></script>
-    <script src="js/bootstrap.min.js"></script> -->
 
     <!-- offline.js -->
-    <!-- <script src="js/offline.js"></script> -->
 	<link rel="stylesheet" type="text/css" href="css/offline-theme-default.css" />
 	<link rel="stylesheet" type="text/css" href="css/offline-language-english.css" />
 
