@@ -26,7 +26,7 @@
   "angleSelectAddX"     : 0.0,
   "angleSelectAddY"     : -0.3,
 
-  "desiredZoomHint"     : 4.5,
+  "desiredZoomHint"     : 5.5,
 
   "aniTimeLR"           : 500.0,
   "aniTimeUD"           : 600.0,
@@ -38,7 +38,7 @@
   "windowsRatio"        : 0.6666,
   "labelRatio"          : 1.3,
   "cameraDistZ"         : 7.0,
-  "upperOffset"         : 0.0,
+  "upperOffset"         : -0.025,
 
 
   "controlAreaInitialVisible" : true,
