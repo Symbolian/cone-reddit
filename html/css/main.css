@@ -63,13 +63,17 @@
 }
 
 .subreddit_list li:hover {
-    color: #337ab7;
+    color: #2f779e;
 }
 
 .subreddit_list li.bg-primary:hover { color: white; }
 
 .subreddit_list li:before {
     content: "\00BB \0020";
+ }
+
+ .bg-primary {
+    background-color: #1e5972;
  }
 
  /* ----- Content styling ----- */
@@ -110,12 +114,20 @@
 
 /* ----- About and Footer ----- */
 
+a {
+    color: #2f779e;
+}
+
+a:hover {
+    color: #216687;
+}
+
 #about {
     min-height: 400px;
 }
 
-#about div:first-child, body, html {
-    background-color: #022E3D;
+body, html {
+    background-color: #044B63;
 }
 
 #about div:first-child {
@@ -129,7 +141,7 @@
 }
 
 #footer {
-    background-color: #044B63;
+    background-color: #022E3D;
     padding-bottom: 80px;
 }
 

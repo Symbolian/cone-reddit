@@ -1,6 +1,6 @@
 {
   "prefsName"           : "Cone for Reddit",
-  "backColor"           : {"rgb":"0x034256","ambiance":1.0},
+  "backColor"           : {"rgb":"0x044B63","ambiance":1.0},
   "textColor"           : {"rgb":"0xffffff","ambiance":1.0},
   "textureFrameColor"   : {"rgb":"0x034256","ambiance":0.6},
   "fontStyle"           : "40px arial",
