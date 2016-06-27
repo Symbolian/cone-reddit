@@ -70,7 +70,7 @@ function weird_double_parser(content) {
 // Show post in sidebar when selected in ConeCanvas
 function show_post(score, title, data) {
     "use strict";
-    console.log("Selected post '" + title);
+    // console.log("Selected post '" + title);
 
     cond_hide_tutorial();
 
@@ -193,7 +193,7 @@ function show_comment(author, data) {
 // Highlight subreddits selected in ConeCanvas
 function show_subreddit(name) {
     "use strict";
-    console.log("Selected subreddit '" + name + "'");
+    // console.log("Selected subreddit '" + name + "'");
 
     $(".post_content").fadeOut(function () {
         $(".comment_content").fadeOut(function () {
@@ -206,11 +206,16 @@ function show_subreddit(name) {
         .parent().addClass("bg-primary");
 }
 
+
+/*
+
 $(".subreddit_list li").click(function () {
     "use strict";
     var url = "http://reddit.com/r/" + $(this).children('strong')[0].innerHTML;
-    // ConeInterface.navigateToCone(url);
+    coneAPI.navigateToCone(url);
 });
+
+*/
 
 // Entry point which is called when selection in ConeCanvas changes
 var globSelectedPrim = function (entry) {
@@ -237,17 +242,13 @@ var globSelectedPrim = function (entry) {
                 }
             };
 
-            // console.log ("entry object: " + JSON.stringify(entry, null, 2));
-            // TODO entryId seems to be set to 0 in all entry objects
-            // workaround: serialize entryId in comment fields
-
             ajaxUrl = "/content?id=".concat(comment.slice(1));
-            console.log("content request: GET " + ajaxUrl);
+            // console.log("content request: GET " + ajaxUrl);
             xhr.open("GET", ajaxUrl, true);
             xhr.timeout = 2000;
             xhr.ontimeout =
                 function () {
-                    console.log("timeout getting content");
+                    console.log("ERROR(cone-reddit): timeout getting content");
                 };
             xhr.send();
         }
@@ -256,5 +257,5 @@ var globSelectedPrim = function (entry) {
 
 var globSetURL = function (newUrl) {
     "use strict";
-    console.log("globSetURL: " + newUrl);
+    // console.log("globSetURL: " + newUrl);
 };

@@ -55,7 +55,7 @@
     list-style: none outside none;
     margin-left: 0px;
     padding-left: .5em;
-    cursor: pointer;
+    /* cursor: pointer; */
 }
 
 .subreddit_list li {
